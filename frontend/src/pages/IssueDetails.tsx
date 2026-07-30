@@ -1,6 +1,6 @@
 import { useEffect, useState, memo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { issuesAPI } from "@/services/api";
+import { issuesAPI, getUploadUrl } from "@/services/api";
 import Navbar from "@/components/Navbar";
 import VoteButton from "@/components/VoteButton";
 import { useAuth } from "@/contexts/AuthContext";
@@ -303,7 +303,7 @@ const IssueDetails = () => {
     );
   }
 
-  const imageUrl = (issue.image);
+  const imageUrl = getUploadUrl(issue.image);
   const departmentLabel = issue.department || "General";
   
   // Dynamic Priority calculation based on votes
