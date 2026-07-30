@@ -1,46 +1,9 @@
 import express from "express";
 import Issue from "../models/Issue.js";
-import multer from "multer";
-import path from "path";
+import upload from "../middleware/upload.js";
 import { requireAuth, optionalAuth, authorizeRoles } from "../middleware/auth.js";
 
 const router = express.Router();
-
-// =======================
-// SECURE UPLOAD CONFIGURATION
-// =======================
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/");
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, uniqueSuffix + ext);
-  },
-});
-
-const fileFilter = (req, file, cb) => {
-  const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp"];
-  const allowedExtensions = [".jpg", ".jpeg", ".png", ".webp"];
-  
-  const fileExt = path.extname(file.originalname).toLowerCase();
-  
-  if (allowedMimeTypes.includes(file.mimetype) && allowedExtensions.includes(fileExt)) {
-    cb(null, true);
-  } else {
-    cb(new Error("Security violation. Only JPEG, PNG, and WEBP image uploads are permitted."), false);
-  }
-};
-
-const upload = multer({
-  storage: storage,
-  fileFilter: fileFilter,
-  limits: {
-    fileSize: 5 * 1024 * 1024,
-  },
-});
 
 // =======================
 // CREATE ISSUE
@@ -68,7 +31,7 @@ router.post("/", requireAuth, upload.single("image"), async (req, res, next) => 
       latitude: latitude ? latitude.trim() : null,
       longitude: longitude ? longitude.trim() : null,
       department: department ? department.trim() : "General",
-      image: req.file ? req.file.filename : null,
+      image: req.file ? req.file.path : null,
       reporter: req.user.id
     });
 
