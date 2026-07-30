@@ -1,6 +1,6 @@
 import { useEffect, useState, memo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { , issuesAPI } from "@/services/api";
+import { issuesAPI } from "@/services/api";
 import Navbar from "@/components/Navbar";
 import VoteButton from "@/components/VoteButton";
 import { useAuth } from "@/contexts/AuthContext";
