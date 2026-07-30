@@ -58,19 +58,15 @@ export const issuesAPI = {
   delete: (id: string) => api.delete(`/issues/${id}`),
 };
 
-export const getUploadUrl = (image?: string | null) => {
+export const getUploadUrl = (image?: string | null): string | null => {
   if (!image) return null;
 
-  // Already a full URL or a browser-managed URL
-  if (/^(https?:)?\/\//.test(image) || image.startsWith("data:") || image.startsWith("blob:")) {
+  if (/^https?:\/\//.test(image)) {
     return image;
   }
 
-  // Already an absolute path (works with a dev proxy or same-origin hosting)
-  if (image.startsWith("/")) return image;
-
-  // Backend stores only the filename (e.g. "171234-foo.jpg")
-  return API_ORIGIN ? `${API_ORIGIN}/uploads/${image}` : `/uploads/${image}`;
+  return image;
 };
+  
 
 export default api;
