@@ -41,12 +41,28 @@ app.use(
 // ==========================================
 // 2. SECURE CORS CONFIGURATION
 // ==========================================
-const corsOptions = {
-  origin: process.env.FRONTEND_URL || "http://localhost:5173",
-  optionsSuccessStatus: 200,
-  credentials: true,
-};
-app.use(cors(corsOptions));
+const allowedOrigins = [
+  "http://localhost:5173",
+  process.env.FRONTEND_URL,
+];
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        origin.endsWith(".vercel.app")
+      ) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+    optionsSuccessStatus: 200,
+  })
+);
 
 // ==========================================
 // 3. MORGAN REQUEST LOGGING
