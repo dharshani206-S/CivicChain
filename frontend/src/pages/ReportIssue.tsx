@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, memo } from "react";
 import { useNavigate } from "react-router-dom";
-import { issuesAPI } from "@/services/api";
+import { issuesAPI, aiAPI, type GeminiAnalysisResult } from "@/services/api";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import ImageUpload from "@/components/ImageUpload";
+import LocationPickerMap from "@/components/LocationPickerMap";
 import {
   Loader2,
   Send,
@@ -17,21 +18,24 @@ import {
   ArrowLeft,
   RefreshCw,
   Sliders,
-  Sparkles
+  Sparkles,
+  AlertTriangle,
+  Navigation
 } from "lucide-react";
 import { DEPARTMENTS } from "@/constants/departments";
 import { getApiErrorMessage } from "@/utils/api";
 import { GeolocationError, getCurrentCoordinates, reverseGeocode } from "@/lib/geolocation";
+import { isWithinPuducherryUT } from "@/lib/puducherryGeo";
 import { motion, AnimatePresence } from "framer-motion";
 
 const toFixed6 = (value: number) => value.toFixed(6);
 
 const buildAutoTitle = (dept: string) => {
   if (!dept) return "Reported issue";
-  if (dept.toLowerCase().includes("street")) return "Street light outage";
-  if (dept.toLowerCase().includes("sewer")) return "Sewerage block";
-  if (dept.toLowerCase().includes("sanit")) return "Sanitation cleaning required";
-  if (dept.toLowerCase().includes("public")) return "Pothole / Road damage";
+  if (dept.toLowerCase().includes("street")) return "Street light outage / malfunction";
+  if (dept.toLowerCase().includes("water")) return "Water supply leak / pipeline damage";
+  if (dept.toLowerCase().includes("sanit")) return "Sanitation cleaning / garbage overflow";
+  if (dept.toLowerCase().includes("road")) return "Pothole / Road infrastructure damage";
   return `${dept} issue`;
 };
 
@@ -74,32 +78,40 @@ Step1Upload.displayName = "Step1Upload";
 const Step2AI = memo(({
   imagePreview,
   autoFilling,
+  geminiLoading,
   aiLogs,
   aiDetected,
   aiError,
   department,
   setDepartment,
-  departmentOptions
+  departmentOptions,
+  isInvalidImage,
+  geminiAnalysis
 }: {
   imagePreview: string | null;
   autoFilling: boolean;
+  geminiLoading: boolean;
   aiLogs: string[];
   aiDetected: { label: string; probability: number } | null;
   aiError: string | null;
   department: string;
   setDepartment: (value: string) => void;
   departmentOptions: string[];
+  isInvalidImage: boolean;
+  geminiAnalysis: GeminiAnalysisResult | null;
 }) => (
   <div className="space-y-6">
     <div>
-      <h2 className="text-xl font-extrabold tracking-tight text-zinc-950">Step 2: AI Vision Classification</h2>
-      <p className="text-xs text-zinc-500 mt-1">TensorFlow model is analyzing image pixels on device.</p>
+      <h2 className="text-xl font-extrabold tracking-tight text-zinc-950">Step 2: AI Multi-Tier Vision Classification</h2>
+      <p className="text-xs text-zinc-500 mt-1">
+        Teachable Machine classifies edge image pixels; Gemini AI verifies and enriches municipal inspection details.
+      </p>
     </div>
 
     <div className="grid gap-6 md:grid-cols-2 items-stretch">
       <div className="relative rounded-xl overflow-hidden border border-zinc-200 aspect-video md:aspect-auto min-h-[220px]">
         {imagePreview && <img src={imagePreview} alt="Scan Preview" className="h-full w-full object-cover" />}
-        {autoFilling && (
+        {(autoFilling || geminiLoading) && (
           <>
             <div className="absolute inset-0 bg-primary/5 backdrop-blur-[0.5px]" />
             <motion.div
@@ -115,24 +127,25 @@ const Step2AI = memo(({
       <div className="flex flex-col justify-between rounded-xl bg-zinc-950 p-5 text-zinc-200 shadow-inner" aria-live="polite">
         <div className="space-y-3 font-mono text-xs">
           <div className="flex items-center gap-2 border-b border-zinc-800 pb-2 mb-2">
-            <span className={`h-2 w-2 rounded-full ${autoFilling ? "bg-amber-500 animate-pulse" : "bg-emerald-500"}`} />
-            <span className="text-[10px] tracking-wider uppercase text-zinc-500">TF.js Log Viewer</span>
+            <span className={`h-2 w-2 rounded-full ${autoFilling || geminiLoading ? "bg-amber-500 animate-pulse" : isInvalidImage ? "bg-rose-500" : "bg-emerald-500"}`} />
+            <span className="text-[10px] tracking-wider uppercase text-zinc-500">TF.js & Gemini Log Stream</span>
           </div>
           {aiLogs.map((log, idx) => (
             <p key={idx} className="leading-relaxed">{log}</p>
           ))}
-          {autoFilling && <p className="text-zinc-500 animate-pulse">&gt; Processing matrix convolutions...</p>}
+          {geminiLoading && <p className="text-amber-400 animate-pulse">&gt; Contacting secondary Gemini AI vision network...</p>}
+          {autoFilling && !geminiLoading && <p className="text-zinc-500 animate-pulse">&gt; Processing matrix convolutions...</p>}
         </div>
 
-        {!autoFilling && (aiDetected || aiError) && (
+        {!autoFilling && !geminiLoading && (aiDetected || aiError) && (
           <div className={`mt-4 flex items-center justify-between gap-1 text-xs border p-2.5 rounded-lg font-mono ${
-            aiError ? "bg-rose-500/10 border-rose-500/20 text-rose-400" : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+            isInvalidImage || aiError ? "bg-rose-500/10 border-rose-500/20 text-rose-400" : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
           }`}>
             {aiError ? (
               <span>{aiError}</span>
             ) : (
               <>
-                <span>Class: {aiDetected?.label}</span>
+                <span>Primary Class: {aiDetected?.label}</span>
                 <span className="font-bold">({Math.round((aiDetected?.probability ?? 0) * 100)}%)</span>
               </>
             )}
@@ -141,10 +154,84 @@ const Step2AI = memo(({
       </div>
     </div>
 
-    {!autoFilling && (
+    {!autoFilling && isInvalidImage && (
+      <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 space-y-2">
+        <div className="flex items-center gap-2 text-rose-700 font-bold text-xs">
+          <AlertTriangle className="h-4.5 w-4.5 shrink-0 text-rose-600" />
+          <span>Invalid Image Detected — Submission Blocked</span>
+        </div>
+        <p className="text-xs text-rose-600 leading-relaxed">
+          The uploaded image was classified as <strong>Invalid / Non-Civic Complaint</strong> ({Math.round((aiDetected?.probability ?? 0) * 100)}% confidence). Human photos, selfies, paper documents, clean non-issue images, or unrelated objects cannot be submitted.
+        </p>
+        <p className="text-[11px] font-semibold text-rose-700">
+          Please click "Back" to Step 1 and upload a photo of a municipal civic issue (e.g. pothole, road crack, garbage pile, broken streetlight, or water pipeline leak).
+        </p>
+      </div>
+    )}
+
+    {!autoFilling && !isInvalidImage && geminiAnalysis && (
+      <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 sm:p-5 space-y-4 shadow-sm">
+        <div className="flex items-center justify-between border-b border-primary/10 pb-3">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4.5 w-4.5 text-primary" />
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-900">
+              Secondary Gemini AI Vision Inspection
+            </h3>
+          </div>
+          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+            Enriched Analysis
+          </span>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="rounded-lg bg-white p-2.5 border border-zinc-200/80">
+            <div className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Department</div>
+            <div className="text-xs font-bold text-zinc-900 mt-0.5">{geminiAnalysis.department}</div>
+          </div>
+
+          <div className="rounded-lg bg-white p-2.5 border border-zinc-200/80">
+            <div className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Assessed Severity</div>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className={`h-2 w-2 rounded-full ${
+                geminiAnalysis.severity === "Critical" ? "bg-rose-600 animate-pulse" :
+                geminiAnalysis.severity === "High" ? "bg-rose-500" :
+                geminiAnalysis.severity === "Medium" ? "bg-amber-500" : "bg-emerald-500"
+              }`} />
+              <span className={`text-xs font-extrabold uppercase ${
+                geminiAnalysis.severity === "Critical" ? "text-rose-700 font-black" :
+                geminiAnalysis.severity === "High" ? "text-rose-600" :
+                geminiAnalysis.severity === "Medium" ? "text-amber-700" : "text-emerald-700"
+              }`}>
+                {geminiAnalysis.severity}
+              </span>
+            </div>
+          </div>
+
+          <div className="rounded-lg bg-white p-2.5 border border-zinc-200/80">
+            <div className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">AI Confidence</div>
+            <div className="text-xs font-bold text-zinc-900 mt-0.5">{Math.round(geminiAnalysis.confidence * 100)}%</div>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <div className="text-[11px] font-bold text-zinc-800">{geminiAnalysis.title}</div>
+          <p className="text-xs text-zinc-600 leading-relaxed font-sans bg-white p-2.5 rounded-lg border border-zinc-200/80">
+            {geminiAnalysis.description}
+          </p>
+        </div>
+
+        {geminiAnalysis.reason && (
+          <div className="text-[10px] text-zinc-400 flex items-center gap-1 font-mono">
+            <span>💡 Inspection Note: {geminiAnalysis.reason}</span>
+          </div>
+        )}
+      </div>
+    )}
+
+    {!autoFilling && !isInvalidImage && (
       <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 space-y-3">
         <label htmlFor="dept-override-select" className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500 cursor-pointer">
-          <Sliders className="h-3.5 w-3.5" /> Override Classification Suggestion
+          <Sliders className="h-3.5 w-3.5" /> Department Routing Selection
         </label>
         <div>
           <select
@@ -153,8 +240,8 @@ const Step2AI = memo(({
             onChange={(e) => setDepartment(e.target.value)}
             className="w-full rounded-lg border border-zinc-200 bg-white py-2.5 px-3 text-xs outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 shadow-sm"
           >
-            <option value="">Select fallback department</option>
-            {departmentOptions.map((d) => (
+            <option value="">Select department</option>
+            {departmentOptions.filter((d) => d !== "Invalid").map((d) => (
               <option key={d} value={d}>{d}</option>
             ))}
           </select>
@@ -173,7 +260,9 @@ const Step3Location = memo(({
   location,
   setLocation,
   geoLogs,
-  onManualEdit
+  onManualEdit,
+  onFetchGps,
+  gpsLoading
 }: {
   latitude: string;
   setLatitude: (value: string) => void;
@@ -183,31 +272,44 @@ const Step3Location = memo(({
   setLocation: (value: string) => void;
   geoLogs: string[];
   onManualEdit: (field: "latitude" | "longitude" | "location") => void;
+  onFetchGps: () => void;
+  gpsLoading: boolean;
 }) => (
   <div className="space-y-6">
-    <div>
-      <h2 className="text-xl font-extrabold tracking-tight text-zinc-950">Step 3: Location Pinpoint</h2>
-      <p className="text-xs text-zinc-500 mt-1">Review solved coordinates or manually override inputs below.</p>
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div>
+        <h2 className="text-xl font-extrabold tracking-tight text-zinc-950">Step 3: Interactive Location Pinpoint</h2>
+        <p className="text-xs text-zinc-500 mt-1">
+          Click anywhere on OpenStreetMap, drag the pin, or detect live GPS coordinates in Puducherry UT.
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={onFetchGps}
+        disabled={gpsLoading}
+        className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-primary/20 bg-primary/10 px-3.5 py-2 text-xs font-bold text-primary hover:bg-primary/20 transition-all shrink-0 shadow-sm"
+      >
+        {gpsLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Navigation className="h-4 w-4" />}
+        Detect Live GPS
+      </button>
     </div>
 
-    <div className="relative aspect-video w-full rounded-xl border border-zinc-200 bg-zinc-50 p-4 shadow-inner overflow-hidden" aria-label="Visual coordinate pinpoint map grid">
-      <svg className="absolute inset-0 h-full w-full opacity-10" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <path d="M 0,40 L 800,450 M 100,0 L 200,500 M 400,0 L 450,500 M 0,250 L 800,200" stroke="#000" strokeWidth="2.5" fill="none" />
-        <circle cx="150" cy="180" r="40" fill="#000" />
-        <circle cx="550" cy="300" r="80" fill="#000" />
-      </svg>
-
-      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-        <span className="absolute inline-flex h-10 w-10 animate-ping rounded-full bg-secondary/20 opacity-75" />
-        <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-white shadow shadow-secondary/30">
-          <MapPin className="h-4.5 w-4.5" />
-        </div>
-      </div>
-
-      <div className="absolute bottom-3 left-3 rounded-md bg-white border border-zinc-200 px-2 py-1 text-[10px] font-semibold text-zinc-500 shadow-sm font-mono">
-        Locked Lat/Lon: {latitude || "0.0"}, {longitude || "0.0"}
-      </div>
+    <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3 text-xs text-emerald-800 font-medium flex items-center gap-2">
+      <MapPin className="h-4 w-4 shrink-0 text-emerald-600" />
+      <span>CivicChain supports reports strictly inside <strong>Pondicherry / Puducherry</strong>.</span>
     </div>
+
+    <LocationPickerMap
+      latitude={latitude}
+      longitude={longitude}
+      onLocationSelect={(lat, lng) => {
+        setLatitude(lat.toFixed(6));
+        setLongitude(lng.toFixed(6));
+        onManualEdit("latitude");
+        onManualEdit("longitude");
+      }}
+      className="h-[360px] w-full rounded-xl"
+    />
 
     <div className="grid gap-4 sm:grid-cols-2">
       <div>
@@ -218,7 +320,7 @@ const Step3Location = memo(({
           value={latitude}
           onChange={(e) => { onManualEdit("latitude"); setLatitude(e.target.value); }}
           required
-          placeholder="e.g. 28.6139"
+          placeholder="e.g. 11.9338"
           className="w-full rounded-lg border border-zinc-200 bg-white py-2.5 px-3 text-sm text-zinc-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 shadow-sm"
         />
       </div>
@@ -230,7 +332,7 @@ const Step3Location = memo(({
           value={longitude}
           onChange={(e) => { onManualEdit("longitude"); setLongitude(e.target.value); }}
           required
-          placeholder="e.g. 77.2090"
+          placeholder="e.g. 79.8300"
           className="w-full rounded-lg border border-zinc-200 bg-white py-2.5 px-3 text-sm text-zinc-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 shadow-sm"
         />
       </div>
@@ -244,7 +346,7 @@ const Step3Location = memo(({
         value={location}
         onChange={(e) => { onManualEdit("location"); setLocation(e.target.value); }}
         required
-        placeholder="Enter street name, sector, or landmark"
+        placeholder="Enter street name, area, or landmark in Puducherry UT"
         className="w-full rounded-lg border border-zinc-200 bg-white py-3 px-4 text-sm text-zinc-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 shadow-sm"
       />
     </div>
@@ -456,7 +558,9 @@ const ReportIssue = () => {
   const [department, setDepartment] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-
+  const [geminiAnalysis, setGeminiAnalysis] = useState<GeminiAnalysisResult | null>(null);
+  const [geminiLoading, setGeminiLoading] = useState(false);
+  const [isInvalidImage, setIsInvalidImage] = useState(false);
   const [loading, setLoading] = useState(false);
   const [autoFilling, setAutoFilling] = useState(false);
   const [aiDetected, setAiDetected] = useState<{ label: string; probability: number } | null>(null);
@@ -481,6 +585,8 @@ const ReportIssue = () => {
   useEffect(() => {
     if (!image) {
       setImagePreview(null);
+      setIsInvalidImage(false);
+      setGeminiAnalysis(null);
       return;
     }
     const url = URL.createObjectURL(image);
@@ -498,7 +604,7 @@ const ReportIssue = () => {
         if (!res.ok) return;
         const data = (await res.json()) as unknown;
         const labels = Array.isArray((data as { labels?: unknown })?.labels)
-          ? ((data as { labels: unknown[] }).labels.filter((label): label is string => typeof label === "string") ?? [])
+          ? ((data as { labels: unknown[] }).labels.filter((label): label is string => typeof label === "string" && label !== "Invalid") ?? [])
           : [];
         if (!cancelled && labels.length) setDepartmentOptions(labels);
       } catch {
@@ -515,6 +621,9 @@ const ReportIssue = () => {
     if (!image) {
       setAiDetected(null);
       setAiError(null);
+      setIsInvalidImage(false);
+      setGeminiAnalysis(null);
+      setGeminiLoading(false);
       setAutoFilling(false);
       setGeoLogs([]);
       setAiLogs([]);
@@ -525,6 +634,9 @@ const ReportIssue = () => {
     setAutoFilling(true);
     setAiDetected(null);
     setAiError(null);
+    setIsInvalidImage(false);
+    setGeminiAnalysis(null);
+    setGeminiLoading(false);
     setGeoLogs(["⌛ Awaiting image analysis..."]);
     setAiLogs(["⌛ Booting client vision neural network..."]);
 
@@ -533,8 +645,11 @@ const ReportIssue = () => {
 
     const run = async () => {
       const predictionPromise = import("@/lib/ai/departmentModel").then(async (m) => {
-        setAiLogs(prev => [...prev, "🧬 Neural layers loaded successfully.", "🔬 Scanning pixels channels..."]);
-        return m.predictDepartmentFromImage(image);
+        setAiLogs(prev => [...prev, "🧬 Neural layers loaded successfully.", "🔬 Scanning 224x224 RGB tensor channels..."]);
+        return {
+          prediction: await m.predictDepartmentFromImage(image),
+          mapper: m.mapPredictionToDepartment,
+        };
       });
 
       const coordsPromise = (async () => {
@@ -550,27 +665,91 @@ const ReportIssue = () => {
 
       try {
         try {
-          const prediction = await predictionPromise;
+          const res = await predictionPromise;
           if (runIdRef.current !== myRunId) return;
 
-          if (prediction) {
-            detectedDepartment = prediction.label;
-            detectedProbability = prediction.probability;
-            setAiDetected({ label: detectedDepartment, probability: detectedProbability });
-            setAiLogs(prev => [
-              ...prev,
-              `✅ Scanning completed. Class resolved: ${prediction.label}`,
-              `📊 Confidence level: ${Math.round(prediction.probability * 100)}%`
-            ]);
+          if (res && res.prediction) {
+            const mapped = res.mapper(res.prediction);
+            setAiDetected({ label: res.prediction.label, probability: res.prediction.probability });
 
-            if (!editedRef.current.department) setDepartment(detectedDepartment);
-            if (!editedRef.current.title) setTitle(buildAutoTitle(detectedDepartment));
-            if (!editedRef.current.description) setDescription(buildAutoDescription({ dept: detectedDepartment }));
+            if (mapped.isInvalid) {
+              setIsInvalidImage(true);
+              setAiError("Image classified as Invalid (Non-civic photo). Submission blocked.");
+              setDepartment("");
+              setAiLogs(prev => [
+                ...prev,
+                `⚠️ Class resolved: Invalid (${Math.round(res.prediction.probability * 100)}% confidence)`,
+                "❌ Image does not contain a valid municipal civic complaint.",
+                "🚫 Submission blocked. Please upload a clear photo of a civic issue."
+              ]);
+              toast.error("The uploaded image does not appear to contain a valid civic complaint. Submission blocked.", { duration: 6000 });
+            } else {
+              setIsInvalidImage(false);
+              detectedDepartment = mapped.department;
+              detectedProbability = res.prediction.probability;
+              setAiLogs(prev => [
+                ...prev,
+                `✅ Scanning completed. Class resolved: ${res.prediction.label}`,
+                `📊 Confidence level: ${Math.round(res.prediction.probability * 100)}%`,
+                `🏢 Department Assigned: ${mapped.department || "General"}`
+              ]);
+
+              if (!editedRef.current.department && mapped.department) setDepartment(mapped.department);
+              if (!editedRef.current.title && mapped.department) setTitle(buildAutoTitle(mapped.department));
+              if (!editedRef.current.description) setDescription(buildAutoDescription({ dept: mapped.department }));
+
+              // Trigger Secondary Gemini AI Analysis for Valid Images
+              setGeminiLoading(true);
+              setAiLogs(prev => [...prev, "🤖 Contacting secondary Gemini AI vision backend..."]);
+
+              try {
+                const formData = new FormData();
+                formData.append("file", image);
+                formData.append("department", mapped.department || "Road Infrastructure");
+
+                const aiRes = await aiAPI.analyze(formData);
+                if (runIdRef.current === myRunId && aiRes.data?.success && aiRes.data.analysis) {
+                  const analysis = aiRes.data.analysis;
+
+                  if (analysis.isCivicIssue === false) {
+                    setIsInvalidImage(true);
+                    setAiError("Gemini AI identified media as non-civic complaint.");
+                    setDepartment("");
+                    setAiLogs(prev => [
+                      ...prev,
+                      "❌ Gemini AI inspection confirmed: Non-civic complaint.",
+                      "🚫 Submission blocked. Please upload a clear photo of a municipal issue."
+                    ]);
+                    toast.error("Gemini AI determined the uploaded photo is not a valid civic issue. Submission blocked.", { duration: 6000 });
+                  } else {
+                    setGeminiAnalysis(analysis);
+                    setAiLogs(prev => [
+                      ...prev,
+                      `✨ Gemini AI Inspection Complete (Severity: ${analysis.severity})`,
+                      `📝 Inspection Summary: ${analysis.title}`
+                    ]);
+
+                    if (!editedRef.current.title && analysis.title) {
+                      setTitle(analysis.title);
+                    }
+                    if (!editedRef.current.description && analysis.description) {
+                      setDescription(analysis.description);
+                    }
+                  }
+                }
+              } catch (geminiErr) {
+                console.warn("Gemini secondary analysis notice:", geminiErr);
+                setAiLogs(prev => [...prev, "⚠️ Gemini secondary analysis notice: Active local classification fallback."]);
+              } finally {
+                if (runIdRef.current === myRunId) setGeminiLoading(false);
+              }
+            }
           } else {
             setAiError("AI could not classify. Select department manually.");
             setAiLogs(prev => [...prev, "❌ Classification returned zero match array."]);
           }
-        } catch {
+        } catch (err) {
+          console.error("TF model error:", err);
           setAiError("Model failed to load. Select department manually.");
           setAiLogs(prev => [...prev, "❌ Failed to load local TF layers."]);
         }
@@ -636,11 +815,72 @@ const ReportIssue = () => {
     }
   };
 
+  const [gpsLoading, setGpsLoading] = useState(false);
+
+  const handleFetchGpsLocation = async () => {
+    setGpsLoading(true);
+    setGeoLogs((prev) => [...prev, "📡 Requesting browser GPS position..."]);
+    try {
+      const coords = await getCurrentCoordinates({
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      });
+      const latStr = coords.latitude.toFixed(6);
+      const lonStr = coords.longitude.toFixed(6);
+      setLatitude(latStr);
+      setLongitude(lonStr);
+      editedRef.current.latitude = true;
+      editedRef.current.longitude = true;
+
+      const isPuducherry = isWithinPuducherryUT(coords.latitude, coords.longitude);
+      if (isPuducherry) {
+        toast.success(`GPS Location Locked in Pondicherry (${latStr}, ${lonStr})`);
+        setGeoLogs((prev) => [...prev, `✅ GPS locked inside Pondicherry: ${latStr}, ${lonStr}`]);
+      } else {
+        toast.warning("Warning: Selected location appears to be outside Pondicherry/Puducherry.");
+        setGeoLogs((prev) => [...prev, `⚠️ Location outside Pondicherry bounds: ${latStr}, ${lonStr}`]);
+      }
+
+      const address = await reverseGeocode(coords);
+      if (address) {
+        setLocation(address);
+        editedRef.current.location = true;
+        setGeoLogs((prev) => [...prev, `🏡 Address: ${address}`]);
+      }
+    } catch (err: unknown) {
+      if (err instanceof GeolocationError) {
+        toast.error(`GPS Error: ${err.message}. You can set location manually or pick on map.`);
+        setGeoLogs((prev) => [...prev, `❌ GPS error: ${err.message}`]);
+      } else {
+        toast.error("Failed to obtain GPS position. Enter address or pick on map.");
+      }
+    } finally {
+      setGpsLoading(false);
+    }
+  };
+
   const handleManualEdit = (field: "title" | "description" | "location" | "latitude" | "longitude") => {
     editedRef.current[field] = true;
   };
 
   const handleFormSubmit = async () => {
+    if (isInvalidImage) {
+      toast.error("Submission blocked: Uploaded image is invalid / non-civic complaint.");
+      return;
+    }
+
+    if (latitude && longitude) {
+      const latNum = parseFloat(latitude);
+      const lngNum = parseFloat(longitude);
+      if (!isNaN(latNum) && !isNaN(lngNum) && (latNum !== 0 || lngNum !== 0)) {
+        if (!isWithinPuducherryUT(latNum, lngNum)) {
+          toast.error("CivicChain currently supports issue reporting only within Pondicherry/Puducherry.");
+          return;
+        }
+      }
+    }
+
     setLoading(true);
     const formData = new FormData();
     formData.append("title", title);
@@ -669,9 +909,23 @@ const ReportIssue = () => {
       toast.error("Please upload an image first.");
       return;
     }
-    if (step === 3 && (!location || !latitude || !longitude)) {
-      toast.error("Please enter location details.");
+    if ((step === 1 || step === 2) && isInvalidImage) {
+      toast.error("Cannot proceed: Uploaded photo was classified as Invalid / Non-Civic. Please upload a valid municipal issue photo.");
       return;
+    }
+    if (step === 3) {
+      if (!location || !latitude || !longitude) {
+        toast.error("Please enter location details.");
+        return;
+      }
+      const latNum = parseFloat(latitude);
+      const lngNum = parseFloat(longitude);
+      if (!isNaN(latNum) && !isNaN(lngNum) && (latNum !== 0 || lngNum !== 0)) {
+        if (!isWithinPuducherryUT(latNum, lngNum)) {
+          toast.error("CivicChain currently supports issue reporting only within Pondicherry/Puducherry.");
+          return;
+        }
+      }
     }
     if (step === 4 && (!title || !description || !department)) {
       toast.error("Please fill in all details.");
@@ -691,6 +945,7 @@ const ReportIssue = () => {
     setLongitude("");
     setDepartment("");
     setAiDetected(null);
+    setIsInvalidImage(false);
     setAiLogs([]);
     setGeoLogs([]);
     editedRef.current = { title: false, description: false, location: false, latitude: false, longitude: false, department: false };
@@ -778,18 +1033,21 @@ const ReportIssue = () => {
                 <Step2AI
                   imagePreview={imagePreview}
                   autoFilling={autoFilling}
+                  geminiLoading={geminiLoading}
                   aiLogs={aiLogs}
                   aiDetected={aiDetected}
                   aiError={aiError}
                   department={department}
                   setDepartment={setDepartment}
                   departmentOptions={departmentOptions}
+                  isInvalidImage={isInvalidImage}
+                  geminiAnalysis={geminiAnalysis}
                 />
                 <div className="flex justify-between pt-4 border-t border-zinc-100">
                   <button onClick={prevStep} className="flex items-center gap-1.5 rounded-lg border border-zinc-200 py-2.5 px-4 text-sm font-semibold text-zinc-600 hover:bg-zinc-50 transition-all focus:outline-none focus:ring-2 focus:ring-zinc-200 focus:ring-offset-2">
                     <ArrowLeft className="h-4 w-4" /> Back
                   </button>
-                  <button onClick={nextStep} disabled={autoFilling} className="flex items-center gap-1.5 rounded-lg bg-zinc-900 py-2.5 px-5 text-sm font-semibold text-white shadow-sm hover:bg-zinc-800 transition-all hover:scale-[1.01] disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2">
+                  <button onClick={nextStep} disabled={autoFilling || geminiLoading || isInvalidImage} className="flex items-center gap-1.5 rounded-lg bg-zinc-900 py-2.5 px-5 text-sm font-semibold text-white shadow-sm hover:bg-zinc-800 transition-all hover:scale-[1.01] disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2">
                     Next Step <ArrowRight className="h-4 w-4" />
                   </button>
                 </div>
@@ -813,6 +1071,8 @@ const ReportIssue = () => {
                   setLocation={setLocation}
                   geoLogs={geoLogs}
                   onManualEdit={handleManualEdit}
+                  onFetchGps={handleFetchGpsLocation}
+                  gpsLoading={gpsLoading}
                 />
                 <div className="flex justify-between pt-4 border-t border-zinc-100">
                   <button onClick={prevStep} className="flex items-center gap-1.5 rounded-lg border border-zinc-200 py-2.5 px-4 text-sm font-semibold text-zinc-600 hover:bg-zinc-50 transition-all focus:outline-none focus:ring-2 focus:ring-zinc-200 focus:ring-offset-2">

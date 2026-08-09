@@ -12,7 +12,10 @@ import {
   LogIn,
   UserPlus,
   FileText,
-  Home
+  Home,
+  TrendingUp,
+  MapPin,
+  BarChart3
 } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -30,17 +33,22 @@ const Navbar = () => {
     navigate("/");
   };
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => location.pathname === path || (path === "/authority/dashboard" && location.pathname === "/authority");
 
   // 1. DYNAMIC NAVIGATION LINKS BASED ON AUTH ROLE
   const links = isAuthenticated
     ? user?.role === "authority"
       ? [
-          { to: "/authority", label: "Operations Center", icon: LayoutDashboard },
+          { to: "/authority/dashboard", label: "Dashboard", icon: LayoutDashboard },
+          { to: "/authority/stats", label: "Stats", icon: BarChart3 },
+          { to: "/authority/issues", label: "Issues", icon: FileText },
+          { to: "/authority/upvoted", label: "Upvoted", icon: TrendingUp },
+          { to: "/authority/heatmap", label: "Heat Map", icon: MapPin },
         ]
       : [
           { to: "/", label: "Home", icon: Home },
           { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+          { to: "/my-stats", label: "My Stats", icon: BarChart3 },
           { to: "/issues", label: "Issues", icon: FileText },
           { to: "/report", label: "Report Issue", icon: PlusCircle },
         ]
@@ -63,11 +71,11 @@ const Navbar = () => {
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-zinc-200 bg-white/95 backdrop-blur-md shadow-sm">
       <div className="container mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="flex h-20 items-center justify-between gap-4">
+        <div className="flex h-16 sm:h-20 items-center justify-between gap-3 sm:gap-4">
           
           {/* Logo Brand on Left */}
-          <Link to={isAuthenticated ? (user?.role === "authority" ? "/authority" : "/dashboard") : "/"} className="flex items-center gap-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md shrink-0">
-            <img src="/favicon.png" alt="CivicChain Emblem" className="h-12 w-12 object-contain" />
+          <Link to={isAuthenticated ? (user?.role === "authority" ? "/authority" : "/dashboard") : "/"} className="flex items-center gap-2.5 sm:gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md shrink-0">
+            <img src="/favicon.png" alt="CivicChain Emblem" className="h-12 w-12 sm:h-16 sm:w-16 object-contain" />
             <span className="text-xl md:text-2xl font-extrabold tracking-tight text-zinc-950 font-sans">CivicChain</span>
           </Link>
 

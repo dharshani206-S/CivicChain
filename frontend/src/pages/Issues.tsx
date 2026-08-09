@@ -199,6 +199,7 @@ const Issues = () => {
           </div>
         </div>
 
+
         {/* Filter controls panel grid */}
         <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm space-y-4">
           <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 border-b border-zinc-150 pb-2">
@@ -277,7 +278,7 @@ const Issues = () => {
           </div>
         ) : filteredAndSorted.length > 0 ? (
           <div className="space-y-6">
-            <div className={isListView ? "space-y-4" : "grid gap-6 sm:grid-cols-2 lg:grid-cols-3"}>
+            <div className={isListView ? "space-y-4" : "grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"}>
               {paginatedIssues.map((issue) => (
                 <IssueCard
                   key={issue._id}

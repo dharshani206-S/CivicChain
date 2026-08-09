@@ -1,4 +1,5 @@
 import { useEffect, useState, memo } from "react";
+import HeatMap from "@/components/HeatMap";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { issuesAPI, getUploadUrl } from "@/services/api";
 import Navbar from "@/components/Navbar";
@@ -8,19 +9,17 @@ import { getApiErrorMessage } from "@/utils/api";
 import {
   MapPin,
   Calendar,
-  Tag,
   Share2,
   Link as LinkIcon,
   ZoomIn,
   X,
-  Clock,
-  CheckCircle2,
   AlertTriangle,
   ArrowLeft,
   User,
   Shield,
-  Layers,
-  Trash2
+  Trash2,
+  Camera,
+  Activity
 } from "lucide-react";
 import type { Issue } from "@/types/issue";
 import { motion, AnimatePresence } from "framer-motion";
@@ -45,37 +44,49 @@ const ImageColumn = memo(({
   imageUrl: string | null;
   title: string;
   onZoom: () => void;
-}) => (
-  <div className="space-y-4">
-    <div className="relative group rounded-xl overflow-hidden border border-zinc-200 bg-white aspect-square shadow-sm">
-      {imageUrl ? (
-        <>
-          <img src={imageUrl} alt={title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]" />
-          <button
-            onClick={onZoom}
-            className="absolute right-3 bottom-3 flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-900/80 backdrop-blur-[1px] text-white opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 focus:outline-none"
-            aria-label="Zoom Image"
-          >
-            <ZoomIn className="h-4.5 w-4.5" />
+}) => {
+  const [imgError, setImgError] = useState(false);
+
+  return (
+    <div className="space-y-4">
+      <div className="relative group rounded-xl overflow-hidden border border-zinc-200 bg-slate-900 aspect-square shadow-sm">
+        {imageUrl && !imgError ? (
+          <>
+            <img
+              src={imageUrl}
+              alt={title}
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+              loading="lazy"
+              decoding="async"
+              onError={() => setImgError(true)}
+            />
+            <button
+              onClick={onZoom}
+              className="absolute right-3 bottom-3 flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-900/80 backdrop-blur-[1px] text-white opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 focus:outline-none"
+              aria-label="Zoom Image"
+            >
+              <ZoomIn className="h-4.5 w-4.5" />
+            </button>
+          </>
+        ) : (
+          <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-slate-900 text-slate-400 p-4 text-center select-none font-mono">
+            <Camera className="h-8 w-8 stroke-[1.5] text-slate-500" />
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Image Unavailable</span>
+          </div>
+        )}
+      </div>
+      
+      {imageUrl && !imgError && (
+        <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-[10px] font-semibold text-zinc-400 flex items-center justify-between">
+          <span>Image attachments (1)</span>
+          <button onClick={onZoom} className="text-primary hover:underline flex items-center gap-1">
+            Expand view &rarr;
           </button>
-        </>
-      ) : (
-        <div className="flex h-full w-full items-center justify-center text-xs text-zinc-400 font-semibold uppercase font-mono">
-          No Image Available
         </div>
       )}
     </div>
-    
-    {imageUrl && (
-      <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-[10px] font-semibold text-zinc-400 flex items-center justify-between">
-        <span>Image attachments (1)</span>
-        <button onClick={onZoom} className="text-primary hover:underline flex items-center gap-1">
-          Expand view &rarr;
-        </button>
-      </div>
-    )}
-  </div>
-));
+  );
+});
 ImageColumn.displayName = "ImageColumn";
 
 const DetailsHeader = memo(({
@@ -180,47 +191,51 @@ const TimelineSection = memo(({
 });
 TimelineSection.displayName = "TimelineSection";
 
-const MapSection = memo(({
-  location,
-  latitude,
-  longitude
+const IssueHeatMapSection = memo(({
+  issue
 }: {
-  location: string;
-  latitude?: string;
-  longitude?: string;
+  issue: import("@/types/issue").Issue;
 }) => {
-  const hasCoords = latitude && longitude;
+  const hasCoords =
+    issue.latitude !== undefined &&
+    issue.latitude !== null &&
+    issue.latitude !== "" &&
+    issue.longitude !== undefined &&
+    issue.longitude !== null &&
+    issue.longitude !== "";
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-sm font-bold text-zinc-900 border-b border-zinc-150 pb-2">Location Coordinates Mapping</h3>
-      
+    <div className="space-y-3">
+      <div className="flex items-center justify-between border-b border-zinc-150 pb-2">
+        <h3 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
+          <Activity className="h-4 w-4 text-rose-500" />
+          Issue Location Heat Map
+        </h3>
+        {hasCoords && (
+          <span className="text-[9px] font-mono text-zinc-400 bg-zinc-50 border border-zinc-200 px-2 py-0.5 rounded">
+            {parseFloat(String(issue.latitude)).toFixed(5)}, {parseFloat(String(issue.longitude)).toFixed(5)}
+          </span>
+        )}
+      </div>
+
       {hasCoords ? (
-        <div className="relative aspect-video w-full rounded-xl border border-zinc-200 bg-zinc-50 overflow-hidden shadow-inner" aria-label="Location coordinate mapping pinpoint">
-          <svg className="absolute inset-0 h-full w-full opacity-10" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path d="M 0,30 L 800,450 M 100,0 L 200,500 M 400,0 L 450,500 M 0,220 L 800,200" stroke="#000" strokeWidth="2" fill="none" />
-          </svg>
-
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-            <span className="absolute inline-flex h-8 w-8 animate-ping rounded-full bg-rose-500/20 opacity-75" />
-            <div className="relative flex h-7 w-7 items-center justify-center rounded-full bg-rose-500 text-white shadow shadow-rose-500/30">
-              <MapPin className="h-4 w-4" />
-            </div>
-          </div>
-
-          <div className="absolute bottom-2.5 left-2.5 rounded bg-white border border-zinc-200 px-2 py-0.5 text-[9px] font-semibold text-zinc-500 font-mono">
-            Lat/Lon: {latitude}, {longitude}
-          </div>
-        </div>
+        <HeatMap
+          issues={[issue]}
+          singleIssueMode={true}
+          className="h-[220px] w-full rounded-lg"
+        />
       ) : (
-        <div className="rounded-xl border border-zinc-200 bg-zinc-50/50 p-6 text-center text-xs text-zinc-400 font-mono">
-          Location coordinates unavailable for this ticket.
+        <div className="flex h-[160px] items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50/50">
+          <div className="text-center space-y-1">
+            <MapPin className="h-6 w-6 text-zinc-300 mx-auto" />
+            <p className="text-xs text-zinc-400 font-mono">GPS coordinates unavailable</p>
+          </div>
         </div>
       )}
     </div>
   );
 });
-MapSection.displayName = "MapSection";
+IssueHeatMapSection.displayName = "IssueHeatMapSection";
 
 // ==========================================
 // MAIN PAGE COMPONENT
@@ -281,7 +296,7 @@ const IssueDetails = () => {
       <div className="min-h-screen bg-[#fafafa]">
         <Navbar />
         <div className="flex justify-center py-24">
-          <Loader2 />
+          <IssueLoader />
         </div>
       </div>
     );
@@ -303,7 +318,7 @@ const IssueDetails = () => {
     );
   }
 
-  const imageUrl = getUploadUrl(issue.image);
+  const imageUrl = getUploadUrl(issue.image, { width: 1000, height: 750 });
   const departmentLabel = issue.department || "General";
   
   // Dynamic Priority calculation based on votes
@@ -427,9 +442,9 @@ const IssueDetails = () => {
             <TimelineSection createdAt={issue.createdAt} department={departmentLabel} status={issue.status} />
           </div>
 
-          {/* Location Map Box */}
+          {/* Location Heat Map Box */}
           <div className="rounded-xl border border-zinc-200 bg-white p-5 sm:p-6 shadow-sm">
-            <MapSection location={issue.location} latitude={issue.latitude} longitude={issue.longitude} />
+            <IssueHeatMapSection issue={issue} />
           </div>
         </div>
 
@@ -469,9 +484,9 @@ const IssueDetails = () => {
   );
 };
 
-const Loader2 = memo(() => (
+const IssueLoader = memo(() => (
   <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" aria-hidden="true" />
 ));
-Loader2.displayName = "Loader2";
+IssueLoader.displayName = "IssueLoader";
 
 export default IssueDetails;

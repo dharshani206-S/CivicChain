@@ -6,6 +6,8 @@ export interface Issue {
   location?: string;
   votes: number;
   department?: string;
+  severity?: "Low" | "Medium" | "High" | "Critical";
+  category?: string;
   status: string;
   createdAt: string;
   latitude?: string;

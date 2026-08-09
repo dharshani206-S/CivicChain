@@ -12,6 +12,13 @@ export type DepartmentPrediction = {
   probabilities: Record<string, number>;
 };
 
+export interface DepartmentMappingResult {
+  prediction: DepartmentPrediction;
+  isInvalid: boolean;
+  department: string | null;
+  message: string;
+}
+
 const MODEL_URL = "/ai-model/model.json";
 const METADATA_URL = "/ai-model/metadata.json";
 
@@ -78,17 +85,17 @@ export const predictDepartmentFromImage = async (file: File): Promise<Department
   ]);
 
   const img = await loadImageFromFile(file);
-  const imageSize = metadata?.imageSize ?? 96;
-  const grayscale = metadata?.grayscale ?? true;
+  const imageSize = metadata?.imageSize ?? 224;
+  const grayscale = metadata?.grayscale ?? false;
 
   const probabilitiesArray = tf.tidy(() => {
     const pixels = tf.browser.fromPixels(img).toFloat(); // [h,w,3]
-    const input = (grayscale ? tf.mean(pixels, 2, true) : pixels) as tf.Tensor3D; // [h,w,1] or [h,w,3]
+    const input = (grayscale ? tf.mean(pixels, 2, true) : pixels) as tf.Tensor3D;
     const resized = tf.image.resizeBilinear(input, [imageSize, imageSize]);
 
-    // Teachable Machine MobileNet-style normalization: [-1, 1]
+    // Teachable Machine MobileNet normalization: [-1, 1]
     const normalized = resized.div(127.5).sub(1);
-    const batched = normalized.expandDims(0); // [1,96,96,1]
+    const batched = normalized.expandDims(0); // [1, 224, 224, 3]
 
     const output = model.predict(batched);
     const tensor = Array.isArray(output) ? output[0] : output;
@@ -118,3 +125,63 @@ export const predictDepartmentFromImage = async (file: File): Promise<Department
   };
 };
 
+/**
+ * Maps the 5 Teachable Machine classes to civic departments or invalid status
+ */
+export const mapPredictionToDepartment = (
+  prediction: DepartmentPrediction
+): DepartmentMappingResult => {
+  const label = prediction.label;
+
+  if (label === "Invalid" || label.toLowerCase().includes("invalid")) {
+    return {
+      prediction,
+      isInvalid: true,
+      department: null,
+      message: "The uploaded image does not appear to contain a valid civic complaint (e.g. human photo, selfie, document, or non-issue image). Please upload a clear photo of a civic issue.",
+    };
+  }
+
+  if (label === "Sanitation") {
+    return {
+      prediction,
+      isInvalid: false,
+      department: "Sanitation",
+      message: "Detected Sanitation issue (garbage pile, bin overflow, dumping).",
+    };
+  }
+
+  if (label === "Water Supply") {
+    return {
+      prediction,
+      isInvalid: false,
+      department: "Water Supply",
+      message: "Detected Water Supply issue (pipeline leak, water overflow).",
+    };
+  }
+
+  if (label === "Road Infrastructure") {
+    return {
+      prediction,
+      isInvalid: false,
+      department: "Road Infrastructure",
+      message: "Detected Road Infrastructure issue (pothole, road crack, damaged pavement).",
+    };
+  }
+
+  if (label === "Street Lights") {
+    return {
+      prediction,
+      isInvalid: false,
+      department: "Street Lights",
+      message: "Detected Street Lights issue (broken light, non-working light, damaged pole).",
+    };
+  }
+
+  return {
+    prediction,
+    isInvalid: false,
+    department: label,
+    message: `Detected ${label} issue.`,
+  };
+};

@@ -42,22 +42,22 @@ app.use(
 // 2. SECURE CORS CONFIGURATION
 // ==========================================
 const allowedOrigins = [
+  "http://localhost:8080",
   "http://localhost:5173",
+  "http://localhost:3000",
   process.env.FRONTEND_URL,
-];
+].filter(Boolean);
 
 app.use(
   cors({
     origin(origin, callback) {
-      if (
-        !origin ||
-        allowedOrigins.includes(origin) ||
-        origin.endsWith(".vercel.app")
-      ) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
+      // Allow requests with no origin (like mobile app, curl, server-to-server)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
       }
+      return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
     optionsSuccessStatus: 200,
@@ -148,7 +148,7 @@ if (!mongoUri) {
 }
 mongoose
   .connect(mongoUri)
-  .then(() => console.log("✅ MongoDB Connected to: " + mongoUri))
+  .then(() => console.log("✅ MongoDB Connected Successfully"))
   .catch((err) => console.error("❌ MongoDB Connection Error:", err));
 
 const PORT = process.env.PORT || 5000;

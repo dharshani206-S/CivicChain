@@ -13,6 +13,11 @@ import ReportIssue from "./pages/ReportIssue";
 import Issues from "./pages/Issues";
 import IssueDetails from "./pages/IssueDetails";
 import AuthorityDashboard from "./pages/AuthorityDashboard";
+import AuthorityIssues from "./pages/AuthorityIssues";
+import AuthorityUpvoted from "./pages/AuthorityUpvoted";
+import AuthorityHeatMap from "./pages/AuthorityHeatMap";
+import AuthorityStats from "./pages/AuthorityStats";
+import MyStats from "./pages/MyStats";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,9 +38,18 @@ const App = () => (
             <Route path="/issues" element={<Issues />} />
             <Route path="/issues/:id" element={<IssueDetails />} />
 
-            {/* AUTHENTICATED/ROLE PROTECTED ROUTES */}
+            {/* CITIZEN AUTHENTICATED ROUTES */}
             <Route path="/report" element={<ProtectedRoute requiredRole="citizen"><ReportIssue /></ProtectedRoute>} />
+            <Route path="/my-stats" element={<ProtectedRoute requiredRole="citizen"><MyStats /></ProtectedRoute>} />
+
+            {/* AUTHORITY AUTHENTICATED SUB-ROUTES */}
             <Route path="/authority" element={<ProtectedRoute requiredRole="authority"><AuthorityDashboard /></ProtectedRoute>} />
+            <Route path="/authority/dashboard" element={<ProtectedRoute requiredRole="authority"><AuthorityDashboard /></ProtectedRoute>} />
+            <Route path="/authority/stats" element={<ProtectedRoute requiredRole="authority"><AuthorityStats /></ProtectedRoute>} />
+            <Route path="/authority/issues" element={<ProtectedRoute requiredRole="authority"><AuthorityIssues /></ProtectedRoute>} />
+            <Route path="/authority/issues/:id" element={<ProtectedRoute requiredRole="authority"><IssueDetails /></ProtectedRoute>} />
+            <Route path="/authority/upvoted" element={<ProtectedRoute requiredRole="authority"><AuthorityUpvoted /></ProtectedRoute>} />
+            <Route path="/authority/heatmap" element={<ProtectedRoute requiredRole="authority"><AuthorityHeatMap /></ProtectedRoute>} />
             
             {/* FALLBACK NOT FOUND ROUTE */}
             <Route path="*" element={<NotFound />} />

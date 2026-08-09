@@ -12,10 +12,9 @@ import {
   TrendingUp,
   Clock,
   Sparkles,
-  ArrowRight,
-  Info,
   CheckCircle2,
-  Users
+  Users,
+  ArrowRight
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -72,7 +71,7 @@ const Landing = () => {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="mx-auto max-w-4xl text-4xl font-extrabold tracking-tight sm:text-6xl lg:text-7xl leading-tight"
+            className="mx-auto max-w-4xl text-3xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight leading-tight"
           >
             Report. Track. <br />
             Resolve. Together.
@@ -197,45 +196,10 @@ const Landing = () => {
       </section>
 
       {/* 4. FOOTER */}
-      <footer className="bg-zinc-950 border-t border-zinc-800 py-16 text-zinc-300">
-        <div className="container mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="grid gap-10 grid-cols-2 md:grid-cols-6 border-b border-zinc-800 pb-12">
-            <div className="col-span-2 flex items-center md:items-start justify-start">
-              <img src="/logo.png" alt="CivicChain Logo" className="h-36 w-auto object-contain" />
-            </div>
-
-            <div>
-              <h4 className="font-bold text-white text-sm uppercase tracking-wider mb-4">Navigations</h4>
-              <ul className="space-y-3 text-sm">
-                <li><Link to="/" className="hover:text-white transition-colors">Home</Link></li>
-                <li><Link to="/issues" className="hover:text-white transition-colors">Directory</Link></li>
-                <li><a href="#about" className="hover:text-white transition-colors">About Us</a></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-bold text-white text-sm uppercase tracking-wider mb-4">Portals</h4>
-              <ul className="space-y-3 text-sm">
-                <li><Link to="/login/citizen" className="hover:text-white transition-colors">Citizen Login</Link></li>
-                <li><Link to="/login/authority" className="hover:text-white transition-colors">Authority Console</Link></li>
-                <li><Link to="/register" className="hover:text-white transition-colors">Register Profile</Link></li>
-              </ul>
-            </div>
-
-            <div className="col-span-2">
-              <h4 className="font-bold text-white text-sm uppercase tracking-wider mb-4 flex items-center gap-1.5">
-                <Info className="h-4 w-4 text-zinc-500" /> Platform Operations
-              </h4>
-              <p className="text-sm leading-relaxed text-zinc-400">
-                CivicChain is a unified smart city incident dispatch system. All uploads are security scanned and locked under express route parameter validations.
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-8 pt-2 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-zinc-500">
-            <p>&copy; 2025 CivicChain | A Student Hackathon Project Leveraging AI for Smarter Civic Solutions</p>
-            <p className="font-mono text-zinc-500">Community. Trust. Consensus.</p>
-          </div>
+      <footer className="bg-zinc-950 border-t border-zinc-800 py-8 text-zinc-500">
+        <div className="container mx-auto max-w-7xl px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
+          <p>&copy; 2025 CivicChain | A Student Hackathon Project Leveraging AI for Smarter Civic Solutions</p>
+          <p className="font-mono">Community. Trust. Consensus.</p>
         </div>
       </footer>
     </div>

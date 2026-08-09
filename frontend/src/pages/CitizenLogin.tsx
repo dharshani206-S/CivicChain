@@ -7,6 +7,7 @@ import { Users, Mail, Lock, Loader2, CheckCircle2, ShieldAlert } from "lucide-re
 import { motion } from "framer-motion";
 import citizenBg from "@/assets/civic-citizen.jpg";
 import PasswordInput from "@/components/PasswordInput";
+import { getApiErrorMessage } from "@/utils/api";
 
 const CitizenLogin = () => {
   const [email, setEmail] = useState("");

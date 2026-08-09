@@ -12,7 +12,10 @@ export const requireAuth = (req, res, next) => {
       return res.status(401).json({ message: "Access denied. Token malformed." });
     }
 
-    const jwtSecret = process.env.JWT_SECRET || "secretkey";
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      return res.status(500).json({ message: "Server misconfiguration: JWT_SECRET missing" });
+    }
     const decoded = jwt.verify(token, jwtSecret);
     
     // Attach decoded user payload to request
@@ -37,14 +40,15 @@ export const optionalAuth = (req, res, next) => {
     if (authHeader && authHeader.startsWith("Bearer ")) {
       const token = authHeader.split(" ")[1];
       if (token) {
-        const jwtSecret = process.env.JWT_SECRET || "secretkey";
-        const decoded = jwt.verify(token, jwtSecret);
-        
-        req.user = {
-          id: decoded.id,
-          role: decoded.role,
-          department: decoded.department
-        };
+        const jwtSecret = process.env.JWT_SECRET;
+        if (jwtSecret) {
+          const decoded = jwt.verify(token, jwtSecret);
+          req.user = {
+            id: decoded.id,
+            role: decoded.role,
+            department: decoded.department
+          };
+        }
       }
     }
     next();

@@ -1,9 +1,9 @@
 import { Link, useNavigate } from "react-router-dom";
 import VoteButton from "./VoteButton";
-import { MapPin, Calendar, ShieldAlert, Sparkles, CheckCircle2, RefreshCw, Trash2 } from "lucide-react";
+import { MapPin, Calendar, ShieldAlert, Sparkles, CheckCircle2, RefreshCw, Trash2, Camera } from "lucide-react";
 import { getUploadUrl, issuesAPI } from "@/services/api";
 import type { Issue } from "@/types/issue";
-import { memo } from "react";
+import { memo, useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -25,6 +25,7 @@ interface IssueCardProps {
 const IssueCard = memo(({ issue, isListView = false, onDelete }: IssueCardProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [imageError, setImageError] = useState(false);
 
   const isOwner = user && issue.reporter && (
     typeof issue.reporter === "object"
@@ -51,9 +52,18 @@ const IssueCard = memo(({ issue, isListView = false, onDelete }: IssueCardProps)
     }
   };
 
-  const imageUrl = getUploadUrl(issue.image);
+  const imageUrl = getUploadUrl(issue.image, { width: 600, height: 340 });
   const departmentLabel = issue.department || "General";
   
+  // AI Severity level badge styling
+  const severityLabel = issue.severity || (issue.votes >= 50 ? "Critical" : issue.votes >= 20 ? "High" : "Medium");
+  const severityStyles: Record<string, string> = {
+    Low: "bg-emerald-500/10 text-emerald-700 border-emerald-500/20",
+    Medium: "bg-amber-500/10 text-amber-700 border-amber-500/20",
+    High: "bg-orange-500/10 text-orange-700 border-orange-500/20",
+    Critical: "bg-rose-500/10 text-rose-700 border-rose-500/20 font-extrabold animate-pulse",
+  };
+
   // Dynamic Priority calculation based on votes
   const getPriority = (votes: number) => {
     if (votes >= 50) return { label: "Critical", style: "bg-rose-100 text-rose-700 border-rose-200" };
@@ -77,11 +87,21 @@ const IssueCard = memo(({ issue, isListView = false, onDelete }: IssueCardProps)
     return (
       <div className="group flex flex-col sm:flex-row gap-4 rounded-xl border border-zinc-200 bg-white p-4 hover:border-zinc-300 hover:shadow-md transition-all">
         {/* Image viewport */}
-        <div className="relative aspect-video sm:w-48 w-full shrink-0 overflow-hidden rounded-lg border border-zinc-100 bg-zinc-50">
-          {imageUrl ? (
-            <img src={imageUrl} alt={issue.title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
+        <div className="relative aspect-video sm:w-48 w-full shrink-0 overflow-hidden rounded-lg border border-zinc-100 bg-zinc-900">
+          {imageUrl && !imageError ? (
+            <img
+              src={imageUrl}
+              alt={issue.title}
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              loading="lazy"
+              decoding="async"
+              onError={() => setImageError(true)}
+            />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-xs text-zinc-400 font-semibold uppercase">No Image</div>
+            <div className="flex h-full w-full flex-col items-center justify-center gap-1.5 bg-slate-900 text-slate-400 p-3 text-center select-none">
+              <Camera className="h-5 w-5 stroke-[1.5] text-slate-500" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">Image Unavailable</span>
+            </div>
           )}
           <span className={`absolute right-2 top-2 rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${statusColors[issue.status] || statusColors.pending}`}>
             {issue.status}
@@ -95,8 +115,8 @@ const IssueCard = memo(({ issue, isListView = false, onDelete }: IssueCardProps)
               <span className="rounded bg-primary/5 text-primary border border-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
                 {departmentLabel}
               </span>
-              <span className={`rounded border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${priority.style}`}>
-                {priority.label} Priority
+              <span className={`rounded border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${severityStyles[severityLabel] || severityStyles.Medium}`}>
+                Severity: {severityLabel}
               </span>
             </div>
             
@@ -145,16 +165,21 @@ const IssueCard = memo(({ issue, isListView = false, onDelete }: IssueCardProps)
   return (
     <div className="group flex flex-col justify-between rounded-xl border border-zinc-200 bg-white shadow-sm hover:shadow-md hover:border-zinc-300 transition-all overflow-hidden">
       {/* Image Block */}
-      <div className="relative aspect-video w-full overflow-hidden border-b border-zinc-100 bg-zinc-50">
-        {imageUrl ? (
+      <div className="relative aspect-video w-full overflow-hidden border-b border-zinc-100 bg-slate-900">
+        {imageUrl && !imageError ? (
           <img
             src={imageUrl}
             alt={issue.title}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
+            decoding="async"
+            onError={() => setImageError(true)}
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-xs text-zinc-400 font-semibold uppercase">No Image</div>
+          <div className="flex h-full w-full flex-col items-center justify-center gap-1.5 bg-slate-900 text-slate-400 p-3 text-center select-none">
+            <Camera className="h-6 w-6 stroke-[1.5] text-slate-500" />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">Image Unavailable</span>
+          </div>
         )}
         <span className={`absolute right-3 top-3 rounded-md border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${statusColors[issue.status] || statusColors.pending}`}>
           {issue.status}
@@ -162,14 +187,14 @@ const IssueCard = memo(({ issue, isListView = false, onDelete }: IssueCardProps)
       </div>
 
       {/* Main Details */}
-      <div className="p-5 flex flex-col justify-between flex-1 gap-4">
-        <div className="space-y-3">
+      <div className="p-3.5 sm:p-5 flex flex-col justify-between flex-1 gap-3 sm:gap-4">
+        <div className="space-y-2.5 sm:space-y-3">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="rounded bg-primary/5 text-primary border border-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
               {departmentLabel}
             </span>
-            <span className={`rounded border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${priority.style}`}>
-              {priority.label}
+            <span className={`rounded border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${severityStyles[severityLabel] || severityStyles.Medium}`}>
+              Severity: {severityLabel}
             </span>
           </div>
 
@@ -181,8 +206,8 @@ const IssueCard = memo(({ issue, isListView = false, onDelete }: IssueCardProps)
           </div>
         </div>
 
-        <div className="space-y-4">
-          <div className="flex flex-col gap-1.5 text-[10px] font-semibold text-zinc-400 border-t border-zinc-100 pt-3.5">
+        <div className="space-y-3 sm:space-y-4">
+          <div className="flex flex-col gap-1.5 text-[10px] font-semibold text-zinc-400 border-t border-zinc-100 pt-2.5 sm:pt-3.5">
             {issue.location && (
               <span className="flex items-center gap-1.5 truncate">
                 <MapPin className="h-3.5 w-3.5 shrink-0" /> {issue.location}

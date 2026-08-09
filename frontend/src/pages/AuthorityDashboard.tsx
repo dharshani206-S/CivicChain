@@ -60,13 +60,13 @@ const AdminStatsRow = memo(({
   ];
 
   return (
-    <div className="grid gap-4 grid-cols-2 md:grid-cols-5">
+    <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
       {cards.map((c, idx) => {
         const CardIcon = c.icon;
         return (
           <div key={idx} className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm space-y-2 hover:border-zinc-300 transition-colors">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">{c.label}</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 truncate">{c.label}</span>
               <div className={`rounded-md p-1 border ${c.style}`}>
                 <CardIcon className="h-4 w-4" />
               </div>
@@ -133,7 +133,6 @@ const AuthorityDashboard = () => {
   const { user } = useAuth();
   const [issues, setIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedMapIssue, setSelectedMapIssue] = useState<Issue | null>(null);
 
   // Search & Filter state
   const [search, setSearch] = useState("");
@@ -143,6 +142,29 @@ const AuthorityDashboard = () => {
   const [sort, setSort] = useState("date-desc");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
+
+  // Authority Analytics State
+  const [authorityAnalytics, setAuthorityAnalytics] = useState<{
+    department: string;
+    stats: {
+      total: number;
+      pending: number;
+      inProgress: number;
+      resolved: number;
+      critical: number;
+      resolutionRate: number;
+      mostReportedCategory: string;
+      mostUpvotedTitle: string;
+      mostUpvotedVotes: number;
+    };
+    charts: {
+      byStatus: { pending: number; inProgress: number; resolved: number; critical: number };
+      bySeverity: { Low: number; Medium: number; High: number; Critical: number };
+      byCategory: Record<string, number>;
+      overTime: Record<string, number>;
+    };
+    recentComplaints: Issue[];
+  } | null>(null);
 
   // 1. SYNC DEPARTMENT LOCK FROM AUTHORITY CREDENTIALS
   useEffect(() => {
@@ -159,17 +181,25 @@ const AuthorityDashboard = () => {
         const data: unknown = res.data;
         const arr = toIssueArray(data);
         setIssues(arr);
-        if (arr.length > 0 && !selectedMapIssue) {
-          setSelectedMapIssue(arr[0]);
-        }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+
+    if (user?.role === "authority" || user?.role === "admin") {
+      issuesAPI
+        .getAuthorityAnalytics()
+        .then((res) => {
+          if (res.data?.success) {
+            setAuthorityAnalytics(res.data);
+          }
+        })
+        .catch((err) => console.warn("Authority analytics notice:", err));
+    }
   };
 
   useEffect(() => {
     fetchIssues();
-  }, []);
+  }, [user]);
 
   // API Call handlers
   const handleStatusUpdate = async (id: string, newStatus: string) => {
@@ -195,14 +225,19 @@ const AuthorityDashboard = () => {
 
   // Stats calculation (strictly real data)
   const stats = useMemo(() => {
+    if (authorityAnalytics?.stats) {
+      const { total, pending, inProgress, resolved, critical } = authorityAnalytics.stats;
+      return { total, pending, inProgress, resolved, critical };
+    }
+
     const total = issues.length;
     const pending = issues.filter((i) => i.status === "pending").length;
     const inProgress = issues.filter((i) => i.status === "in-progress" || i.status === "progress").length;
     const resolved = issues.filter((i) => i.status === "resolved").length;
-    const critical = issues.filter((i) => i.votes >= 50).length;
+    const critical = issues.filter((i) => i.votes >= 50 || i.severity === "Critical").length;
 
     return { total, pending, inProgress, resolved, critical };
-  }, [issues]);
+  }, [issues, authorityAnalytics]);
 
   // Notifications Feed (real data logs filter: high votes or new status)
   const alerts = useMemo(() => {
@@ -220,19 +255,6 @@ const AuthorityDashboard = () => {
             : `New ticket registered in ${i.department || "General"} queue.`
         };
       });
-  }, [issues]);
-
-  // Map coordinates plotter
-  const mapIssuePins = useMemo(() => {
-    return issues.map((issue) => {
-      const numId = issue._id.replace(/\D/g, "");
-      const seedX = numId ? parseInt(numId.slice(-2)) || 50 : 50;
-      const seedY = numId ? parseInt(numId.slice(-4, -2)) || 50 : 50;
-
-      const x = 15 + (seedX % 70) + "%";
-      const y = 15 + (seedY % 70) + "%";
-      return { ...issue, x, y };
-    });
   }, [issues]);
 
   // Table filtering and sorting
@@ -300,93 +322,29 @@ const AuthorityDashboard = () => {
             </div>
             <div>
               <h1 className="text-3xl font-extrabold tracking-tight text-zinc-950">
-                {user?.role === "admin" ? "Admin Command Center" : `${user?.department} Operations`}
+                Authority Dashboard
               </h1>
-              <p className="text-sm text-zinc-500 mt-1">
-                {user?.role === "admin" 
-                  ? "Global systems administration dashboard. Manage all departments queue queues."
-                  : `Locked department portal. Monitor and resolve ${user?.department} tickets.`
-                }
-              </p>
+              <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                <span className="text-xs text-zinc-500 font-medium">Officer: <strong className="text-zinc-900">{user?.name || "Department Officer"}</strong></span>
+                <span className="text-zinc-300">•</span>
+                <span className="rounded bg-primary/10 text-primary border border-primary/20 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide">
+                  Department: {user?.department || "General"}
+                </span>
+              </div>
             </div>
           </div>
+          <Link
+            to="/authority/stats"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3.5 py-2 text-xs font-bold text-zinc-700 shadow-sm hover:bg-zinc-50 hover:border-zinc-300 transition-all"
+          >
+            <TrendingUp className="h-4 w-4 text-primary" /> View Department Stats
+          </Link>
         </div>
 
-        {/* Stats Row */}
-        <AdminStatsRow
-          total={stats.total}
-          pending={stats.pending}
-          inProgress={stats.inProgress}
-          resolved={stats.resolved}
-          critical={stats.critical}
-        />
-
-        {/* Map & Alerts Grid */}
-        <div className="grid gap-6 lg:grid-cols-12 items-stretch">
-          
-          {/* Geotagged Map */}
-          <div className="lg:col-span-8 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm flex flex-col justify-between min-h-[360px] hover:border-zinc-300 transition-colors">
-            <div>
-              <h3 className="text-base font-bold text-zinc-900">Incident Geotagging Map</h3>
-              <p className="text-xs text-zinc-500 mt-0.5 font-sans">Pins show active problem areas colored by status.</p>
-            </div>
-
-            <div className="relative aspect-video w-full rounded-lg border border-zinc-150 bg-zinc-50 overflow-hidden mt-4">
-              <svg className="absolute inset-0 h-full w-full opacity-10" xmlns="http://www.w3.org/2000/svg">
-                <path d="M 0,30 L 1000,400 M 50,0 L 150,500 M 350,0 L 400,500 M 0,200 L 1000,180" stroke="#000" strokeWidth="2" fill="none" />
-              </svg>
-
-              {mapIssuePins.map((pin) => {
-                const isSelected = selectedMapIssue?._id === pin._id;
-                let colorClass = "bg-amber-500";
-                if (pin.status === "resolved") colorClass = "bg-emerald-500";
-                else if (pin.status === "in-progress" || pin.status === "progress") colorClass = "bg-primary";
-                else if (pin.status === "critical") colorClass = "bg-rose-500";
-
-                return (
-                  <button
-                    key={pin._id}
-                    onClick={() => setSelectedMapIssue(pin)}
-                    style={{ left: pin.x, top: pin.y }}
-                    className="absolute -translate-x-1/2 -translate-y-1/2 focus:outline-none p-1"
-                  >
-                    <span className={`absolute inline-flex h-6 w-6 animate-ping rounded-full opacity-65 ${isSelected ? "bg-rose-500/20" : "bg-zinc-400/10"}`} />
-                    <span className={`relative block h-3 w-3 rounded-full border border-white shadow ${colorClass} transition-transform ${isSelected ? "scale-125 ring-2 ring-primary/15" : ""}`} />
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Notifications Panel */}
-          <div className="lg:col-span-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm flex flex-col justify-between hover:border-zinc-300 transition-colors">
-            <div className="flex items-center gap-2 border-b border-zinc-100 pb-3">
-              <Bell className="h-4.5 w-4.5 text-zinc-400 animate-pulse" />
-              <h3 className="text-sm font-bold text-zinc-900">Operations Feed</h3>
-            </div>
-            
-            <div className="divide-y divide-zinc-100 flex-1 overflow-y-auto max-h-[300px] mt-2 pr-1">
-              {alerts.map((a) => (
-                <div key={a.id} className="py-3.5 space-y-1">
-                  <div className="flex justify-between items-center gap-4 text-[9px] font-bold text-zinc-400 font-mono">
-                    <span className="uppercase">ALERT COMPILATION</span>
-                    <span>{a.time}</span>
-                  </div>
-                  <h4 className="text-xs font-bold text-zinc-800 line-clamp-1">{a.title}</h4>
-                  <p className="text-[10px] text-zinc-500 leading-normal">{a.desc}</p>
-                </div>
-              ))}
-              {alerts.length === 0 && (
-                <div className="text-center py-16 text-xs text-zinc-400 font-mono">All logs checked. Feed empty.</div>
-              )}
-            </div>
-          </div>
-
-        </div>
 
         {/* Issue Management Operations Table */}
         <div className="rounded-xl border border-zinc-200 bg-white shadow-sm overflow-hidden space-y-4 p-5 hover:border-zinc-300 transition-colors">
-          <div className="flex items-center justify-between border-b border-zinc-150 pb-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-150 pb-3">
             <div className="flex items-center gap-1.5 text-sm font-bold text-zinc-900">
               <Sliders className="h-4.5 w-4.5 text-zinc-400" /> Dispatch Control Panel
             </div>
@@ -486,14 +444,23 @@ const AuthorityDashboard = () => {
               </thead>
               <tbody className="divide-y divide-zinc-200">
                 {paginatedIssues.map((issue) => {
-                  const imageUrl = getUploadUrl(issue.image);
+                  const imageUrl = getUploadUrl(issue.image, { width: 120, height: 120 });
                   return (
                     <tr key={issue._id} className="hover:bg-zinc-50/50 transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 shrink-0 rounded-md border border-zinc-150 overflow-hidden bg-zinc-50">
+                          <div className="h-10 w-10 shrink-0 rounded-md border border-zinc-150 overflow-hidden bg-slate-900 flex items-center justify-center">
                             {imageUrl ? (
-                              <img src={imageUrl} alt="" className="h-full w-full object-cover" />
+                              <img
+                                src={imageUrl}
+                                alt=""
+                                className="h-full w-full object-cover"
+                                loading="lazy"
+                                decoding="async"
+                                onError={(e) => {
+                                  (e.currentTarget as HTMLElement).style.display = 'none';
+                                }}
+                              />
                             ) : (
                               <div className="h-full w-full flex items-center justify-center text-[9px] text-zinc-400 font-bold uppercase font-mono">NA</div>
                             )}

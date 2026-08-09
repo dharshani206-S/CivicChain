@@ -24,9 +24,35 @@ const issueSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  locationPoint: {
+    type: {
+      type: String,
+      enum: ["Point"],
+      default: "Point"
+    },
+    coordinates: {
+      type: [Number], // [longitude, latitude]
+      default: undefined
+    }
+  },
   department: {
     type: String,
     default: "General"
+  },
+  severity: {
+    type: String,
+    enum: ["Low", "Medium", "High", "Critical"],
+    default: "Medium"
+  },
+  category: {
+    type: String,
+    default: null
+  },
+  aiAnalysis: {
+    isCivicIssue: { type: Boolean, default: true },
+    confidence: { type: Number, default: 0.85 },
+    reason: { type: String, default: null },
+    suggestedAction: { type: String, default: null }
   },
   image: {
     type: String,
@@ -62,6 +88,7 @@ const issueSchema = new mongoose.Schema({
 issueSchema.index({ department: 1, status: 1 });
 issueSchema.index({ votes: -1 });
 issueSchema.index({ createdAt: -1 });
+issueSchema.index({ locationPoint: "2dsphere" });
 
 const Issue = mongoose.model("Issue", issueSchema);
 
