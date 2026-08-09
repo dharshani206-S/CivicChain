@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Users, Mail, Lock, Loader2, CheckCircle2, ShieldAlert } from "lucide-react";
 import { motion } from "framer-motion";
 import citizenBg from "@/assets/civic-citizen.jpg";
-import { getApiErrorMessage } from "@/utils/api";
+import PasswordInput from "@/components/PasswordInput";
 
 const CitizenLogin = () => {
   const [email, setEmail] = useState("");
@@ -128,17 +128,12 @@ const CitizenLogin = () => {
 
             <div>
               <label className="mb-1.5 block text-xs font-bold text-zinc-700 uppercase tracking-wider">Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full rounded-lg border border-zinc-200 bg-white py-3 pl-11 pr-4 text-sm text-zinc-800 outline-none transition-all placeholder-zinc-400 focus:border-primary focus:ring-4 focus:ring-primary/10 shadow-sm"
-                  placeholder="••••••••"
-                />
-              </div>
+              <PasswordInput
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+              />
             </div>
 
             <motion.button

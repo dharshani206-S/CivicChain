@@ -2,17 +2,15 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { authAPI } from "@/services/api";
 import { toast } from "sonner";
-import { UserPlus, Mail, Lock, User, Loader2, Landmark, Users, Shield } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { DEPARTMENTS } from "@/constants/departments";
+import { UserPlus, Mail, User, Loader2, Shield } from "lucide-react";
+import { motion } from "framer-motion";
 import { getApiErrorMessage } from "@/utils/api";
+import PasswordInput from "@/components/PasswordInput";
 
 const Register = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"citizen" | "authority">("citizen");
-  const [department, setDepartment] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -24,11 +22,9 @@ const Register = () => {
         name,
         email,
         password,
-        role,
-        department: role === "authority" ? department : undefined
       });
-      toast.success("Account created! Please log in.");
-      navigate(role === "authority" ? "/login/authority" : "/login/citizen");
+      toast.success("Citizen account created! Please log in.");
+      navigate("/login/citizen");
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Registration failed"));
     } finally {
@@ -54,10 +50,10 @@ const Register = () => {
           </Link>
           <div>
             <div className="mx-auto mb-4 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary border border-primary/20">
-              <UserPlus className="h-3.5 w-3.5" /> Create Account
+              <UserPlus className="h-3.5 w-3.5" /> Citizen Registration
             </div>
             <h1 className="text-3xl font-extrabold tracking-tight text-zinc-950 mt-1">Join CivicChain</h1>
-            <p className="mt-2 text-sm text-zinc-500">Sign up to submit reports, track details, and participate.</p>
+            <p className="mt-2 text-sm text-zinc-500">Sign up as a citizen to submit municipal reports and track issues.</p>
           </div>
         </div>
 
@@ -98,81 +94,13 @@ const Register = () => {
 
           <div>
             <label className="mb-1.5 block text-xs font-bold text-zinc-700 uppercase tracking-wider">Password</label>
-            <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full rounded-lg border border-zinc-200 bg-white py-3 pl-11 pr-4 text-sm text-zinc-800 outline-none transition-all placeholder-zinc-400 focus:border-primary focus:ring-4 focus:ring-primary/10 shadow-sm"
-                placeholder="••••••••"
-              />
-            </div>
+            <PasswordInput
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              placeholder="••••••••"
+            />
           </div>
-
-          {/* Role selection Cards */}
-          <div>
-            <label className="mb-2 block text-xs font-bold text-zinc-700 uppercase tracking-wider">Account Role</label>
-            <div className="grid grid-cols-2 gap-3">
-              {(["citizen", "authority"] as const).map((r) => {
-                const Icon = r === "citizen" ? Users : Shield;
-                const labelText = r === "citizen" ? "Citizen" : "Officer";
-                const descText = r === "citizen" ? "Report & Vote" : "Verify & Assign";
-                const isSelected = role === r;
-                
-                return (
-                  <button
-                    key={r}
-                    type="button"
-                    onClick={() => setRole(r)}
-                    className={`flex flex-col items-center justify-center rounded-lg border p-4 text-center transition-all ${
-                      isSelected
-                        ? "border-primary bg-primary/5 ring-1 ring-primary"
-                        : "border-zinc-200 bg-white hover:bg-zinc-50 hover:border-zinc-300"
-                    }`}
-                  >
-                    <Icon className={`h-6 w-6 mb-2 ${isSelected ? "text-primary" : "text-zinc-400"}`} />
-                    <span className="text-xs font-bold text-zinc-800">{labelText}</span>
-                    <span className="text-[10px] text-zinc-400 mt-0.5">{descText}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Sliding Department dropdown container */}
-          <AnimatePresence>
-            {role === "authority" && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden"
-              >
-                <div className="pt-2">
-                  <label className="mb-1.5 block text-xs font-bold text-zinc-700 uppercase tracking-wider">Department</label>
-                  <div className="relative">
-                    <Landmark className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-                    <select
-                      value={department}
-                      onChange={(e) => setDepartment(e.target.value)}
-                      required
-                      className="w-full rounded-lg border border-zinc-200 bg-white py-3 pl-11 pr-4 text-sm text-zinc-800 outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/10 shadow-sm appearance-none"
-                    >
-                      <option value="">Select your department</option>
-                      {DEPARTMENTS.map((d) => (
-                        <option key={d} value={d}>
-                          {d}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
 
           <motion.button
             type="submit"
@@ -180,17 +108,25 @@ const Register = () => {
             whileTap={{ scale: 0.98 }}
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-3 px-4 text-sm font-semibold text-white shadow-md shadow-primary/10 hover:bg-primary/95 transition-all disabled:opacity-50 mt-6"
           >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create New Account"}
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Register Citizen Account"}
           </motion.button>
         </form>
 
-        {/* Footer Navigation link */}
-        <p className="text-center text-xs text-zinc-500">
-          Already have an account?{" "}
-          <Link to="/login/citizen" className="font-bold text-primary hover:underline">
-            Sign In here
-          </Link>
-        </p>
+        {/* Footer Navigation links */}
+        <div className="space-y-2 text-center text-xs text-zinc-500">
+          <p>
+            Already have an account?{" "}
+            <Link to="/login/citizen" className="font-bold text-primary hover:underline">
+              Sign In here
+            </Link>
+          </p>
+          <p>
+            <Link to="/login/authority" className="inline-flex items-center gap-1 font-semibold text-zinc-600 hover:text-zinc-950 transition-colors">
+              <Shield className="h-3.5 w-3.5 text-zinc-400" />
+              Officer? Sign in to Authority Console
+            </Link>
+          </p>
+        </div>
       </motion.div>
     </div>
   );

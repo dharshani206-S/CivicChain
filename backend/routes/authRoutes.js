@@ -41,23 +41,13 @@ router.post("/register", async (req, res, next) => {
     }
 
     // 2. PRIVILEGE ESCALATION PREVENTION
-    // Citizens cannot register themselves as authorities or admins.
-    // If registration role is requested as authority or admin, we check a security code
-    // or block it. To be completely secure, public registration forces citizen role.
-    let assignedRole = "citizen";
-    let assignedDepartment = null;
-
-    if (role === "authority") {
-      // Validate department if officer registration
-      if (!department) {
-        return res.status(400).json({ message: "Department is required for officer registration." });
-      }
-      assignedRole = "authority";
-      assignedDepartment = department;
-    } else if (role === "admin") {
-      // Prevent registering admin publicly
-      return res.status(403).json({ message: "Public registration of administrative roles is disabled." });
+    // Public registration forces citizen role only. Authorities/Admins cannot self-register.
+    if (role === "authority" || role === "admin") {
+      return res.status(403).json({ message: "Public authority registration is disabled." });
     }
+
+    const assignedRole = "citizen";
+    const assignedDepartment = null;
 
     // 3. IMPROVED PASSWORD HANDLING (Cost factor = 12)
     const salt = await bcrypt.genSalt(12);
