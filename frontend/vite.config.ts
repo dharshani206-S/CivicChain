@@ -38,4 +38,22 @@ export default defineConfig(() => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    chunkSizeWarningLimit: 150,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules/@tensorflow")) {
+            return "tensorflow-vendor";
+          }
+          if (id.includes("node_modules/leaflet")) {
+            return "leaflet-vendor";
+          }
+          if (id.includes("node_modules/recharts")) {
+            return "recharts-vendor";
+          }
+        },
+      },
+    },
+  },
 }));
