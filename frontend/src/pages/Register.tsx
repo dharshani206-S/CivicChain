@@ -6,6 +6,7 @@ import { UserPlus, Mail, User, Loader2, Shield } from "lucide-react";
 import { motion } from "framer-motion";
 import { getApiErrorMessage } from "@/utils/api";
 import PasswordInput from "@/components/PasswordInput";
+import SEO from "@/components/SEO";
 
 const Register = () => {
   const [name, setName] = useState("");
@@ -22,6 +23,7 @@ const Register = () => {
         name,
         email,
         password,
+        role: "citizen"
       });
       toast.success("Citizen account created! Please log in.");
       navigate("/login/citizen");
@@ -33,7 +35,13 @@ const Register = () => {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-[#fafafa] px-4 py-12">
+    <main className="relative flex min-h-screen items-center justify-center bg-[#fafafa] px-4 py-12">
+      <SEO
+        title="Register Citizen Account | CivicChain Puducherry"
+        description="Join CivicChain as a Puducherry citizen to submit civic complaints, upvote local municipal issues, and track live departmental resolution."
+        canonicalUrl="https://civic-chain-tau.vercel.app/register"
+      />
+
       {/* Decorative grid pattern background */}
       <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#e5e7eb_1px,transparent_1px),linear-gradient(to_bottom,#e5e7eb_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-30" />
 
@@ -44,9 +52,9 @@ const Register = () => {
         className="w-full max-w-lg space-y-6"
       >
         {/* Header Block */}
-        <div className="text-center space-y-4">
+        <header className="text-center space-y-4">
           <Link to="/" className="inline-block">
-            <img src="/logo.png" alt="CivicChain Logo" className="h-24 w-auto object-contain mx-auto" />
+            <img src="/logo.png" alt="CivicChain Platform Logo" className="h-24 w-auto object-contain mx-auto" />
           </Link>
           <div>
             <div className="mx-auto mb-4 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary border border-primary/20">
@@ -55,7 +63,7 @@ const Register = () => {
             <h1 className="text-3xl font-extrabold tracking-tight text-zinc-950 mt-1">Join CivicChain</h1>
             <p className="mt-2 text-sm text-zinc-500">Sign up as a citizen to submit municipal reports and track issues.</p>
           </div>
-        </div>
+        </header>
 
         {/* Card Form container */}
         <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-zinc-200 bg-white p-6 sm:p-8 shadow-md">
@@ -128,7 +136,7 @@ const Register = () => {
           </p>
         </div>
       </motion.div>
-    </div>
+    </main>
   );
 };
 

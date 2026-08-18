@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { issuesAPI } from "@/services/api";
 import Navbar from "@/components/Navbar";
 import IssueCard from "@/components/IssueCard";
+import SEO from "@/components/SEO";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Search,
@@ -30,10 +31,15 @@ const AuthorityIssues = () => {
     setLoading(true);
     try {
       const res = await issuesAPI.getAll();
-      const arr = toIssueArray(res.data);
-      setIssues(arr);
-    } catch (err) {
-      console.error("Failed to load department issues:", err);
+      const raw = toIssueArray(res.data);
+      // Backend automatically isolates by department for authority, but ensure local filter
+      if (user?.department) {
+        setIssues(raw.filter((i) => i.department === user.department));
+      } else {
+        setIssues(raw);
+      }
+    } catch {
+      // Handled silently
     } finally {
       setLoading(false);
     }
@@ -41,39 +47,30 @@ const AuthorityIssues = () => {
 
   useEffect(() => {
     void fetchIssues();
-  }, []);
+  }, [user]);
 
   const filteredAndSorted = useMemo(() => {
-    let result = [...issues];
-
-    // Department lock safeguard
-    if (user?.role === "authority" && user.department) {
-      result = result.filter((i) => i.department === user.department);
-    }
-
-    if (status) {
-      result = result.filter((i) => i.status === status);
-    }
-
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter(
-        (i) =>
-          i.title.toLowerCase().includes(q) ||
-          i.description.toLowerCase().includes(q) ||
-          (i.location && i.location.toLowerCase().includes(q))
-      );
-    }
-
-    result.sort((a, b) => {
-      if (sort === "votes-desc") return b.votes - a.votes;
-      if (sort === "date-desc") return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      if (sort === "date-asc") return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-      return 0;
-    });
-
-    return result;
-  }, [issues, user, status, search, sort]);
+    return issues
+      .filter((i) => {
+        if (status && i.status !== status) return false;
+        if (search) {
+          const q = search.toLowerCase();
+          return (
+            i.title.toLowerCase().includes(q) ||
+            i.description.toLowerCase().includes(q) ||
+            (i.location && i.location.toLowerCase().includes(q))
+          );
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        if (sort === "votes-desc") return b.votes - a.votes;
+        if (sort === "votes-asc") return a.votes - b.votes;
+        if (sort === "date-desc") return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        if (sort === "date-asc") return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        return 0;
+      });
+  }, [issues, search, status, sort]);
 
   const resetFilters = () => {
     setSearch("");
@@ -83,6 +80,11 @@ const AuthorityIssues = () => {
 
   return (
     <div className="min-h-screen bg-[#fafafa] text-zinc-950 font-sans pb-16">
+      <SEO
+        title="Department Issues Directory | CivicChain"
+        description="Department municipal complaint directory and filter console."
+        noIndex={true}
+      />
       <Navbar />
 
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-8 space-y-8">

@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo, memo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getUploadUrl, issuesAPI } from "@/services/api";
 import Navbar from "@/components/Navbar";
+import SEO from "@/components/SEO";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Shield,
@@ -310,6 +311,11 @@ const AuthorityDashboard = () => {
 
   return (
     <div className="min-h-screen bg-[#fafafa] text-zinc-950 font-sans pb-16">
+      <SEO
+        title="Authority Command Center | CivicChain"
+        description="Department Dispatch Command Center and Ticket Management."
+        noIndex={true}
+      />
       <Navbar />
 
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-8 space-y-8">

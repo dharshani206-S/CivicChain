@@ -4,7 +4,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { issuesAPI } from "@/services/api";
 import Navbar from "@/components/Navbar";
 import IssueCard from "@/components/IssueCard";
-import { Search, Grid, List, ListFilter, RotateCcw, ChevronLeft, ChevronRight, SlidersHorizontal, Loader2 } from "lucide-react";
+import SEO from "@/components/SEO";
+import { Search, Grid, List, RotateCcw, ChevronLeft, ChevronRight, SlidersHorizontal, Loader2 } from "lucide-react";
 import type { Issue } from "@/types/issue";
 import { toIssueArray } from "@/utils/api";
 import { DEPARTMENTS } from "@/constants/departments";
@@ -41,7 +42,7 @@ const PaginationControls = memo(({
   const endIdx = Math.min(currentPage * itemsPerPage, totalCount);
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-zinc-200 pt-6">
+    <nav aria-label="Issues pagination" className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-zinc-200 pt-6">
       <span className="text-xs text-zinc-500 font-semibold leading-normal">
         Showing <span className="font-bold text-zinc-800">{startIdx}</span> to <span className="font-bold text-zinc-800">{endIdx}</span> of <span className="font-bold text-zinc-800">{totalCount}</span> reports
       </span>
@@ -62,6 +63,8 @@ const PaginationControls = memo(({
             <button
               key={pNum}
               onClick={() => onPageChange(pNum)}
+              aria-current={isSelected ? "page" : undefined}
+              aria-label={`Page ${pNum}`}
               className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border text-xs font-bold transition-all focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 ${
                 isSelected ? "bg-zinc-900 border-zinc-900 text-white shadow" : "border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700"
               }`}
@@ -80,7 +83,7 @@ const PaginationControls = memo(({
           <ChevronRight className="h-4 w-4 text-zinc-600" />
         </button>
       </div>
-    </div>
+    </nav>
   );
 });
 PaginationControls.displayName = "PaginationControls";
@@ -167,14 +170,45 @@ const Issues = () => {
     setCurrentPage(1);
   };
 
+  const directoryStructuredData = useMemo(() => ({
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "Civic Issues in Puducherry | CivicChain",
+    "description": "Public directory of civic, municipal, and infrastructure complaints in Puducherry.",
+    "url": "https://civic-chain-tau.vercel.app/issues",
+    "mainEntity": {
+      "@type": "ItemList",
+      "itemListElement": paginatedIssues.slice(0, 10).map((issue, idx) => ({
+        "@type": "ListItem",
+        "position": idx + 1,
+        "url": `https://civic-chain-tau.vercel.app/issues/${issue._id}`,
+        "name": issue.title
+      }))
+    }
+  }), [paginatedIssues]);
+
   return (
     <div className="min-h-screen bg-[#fafafa] text-zinc-950 font-sans pb-16">
+      <SEO
+        title="Civic Issues in Puducherry | CivicChain"
+        description="Review active municipal tickets, road repairs, sanitation complaints, and public safety issues in Puducherry. Search by category and upvote community priorities."
+        canonicalUrl="https://civic-chain-tau.vercel.app/issues"
+        structuredData={directoryStructuredData}
+        keywords={[
+          "Puducherry civic issues directory",
+          "Pondicherry municipal complaints",
+          "road damage Pondicherry",
+          "water supply issues Puducherry",
+          "electricity complaint Puducherry"
+        ]}
+      />
+
       <Navbar />
 
-      <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-8 space-y-6">
+      <main className="container mx-auto max-w-7xl px-4 sm:px-6 py-8 space-y-6">
         
         {/* Header Title block */}
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200 pb-5">
+        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200 pb-5">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight text-zinc-950">Issues Directory</h1>
             <p className="text-sm text-zinc-500 mt-1">Review active municipal tickets, search categories, or check status pipelines.</p>
@@ -197,11 +231,10 @@ const Issues = () => {
               <List className="h-4 w-4" />
             </button>
           </div>
-        </div>
-
+        </header>
 
         {/* Filter controls panel grid */}
-        <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm space-y-4">
+        <section aria-label="Issue Filter Controls" className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm space-y-4">
           <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 border-b border-zinc-150 pb-2">
             <SlidersHorizontal className="h-4 w-4 text-zinc-400" /> Filter Controls
           </div>
@@ -215,6 +248,7 @@ const Issues = () => {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search issues..."
+                aria-label="Search civic issues"
                 className="w-full rounded-lg border border-zinc-200 bg-white py-2 pl-9 pr-4 text-xs text-zinc-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 shadow-sm"
               />
             </div>
@@ -224,6 +258,7 @@ const Issues = () => {
               <select
                 value={dept}
                 onChange={(e) => setDept(e.target.value)}
+                aria-label="Filter by department"
                 className="w-full rounded-lg border border-zinc-200 bg-white py-2 px-3 text-xs text-zinc-700 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 shadow-sm"
               >
                 <option value="">All Departments</option>
@@ -238,6 +273,7 @@ const Issues = () => {
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
+                aria-label="Filter by status"
                 className="w-full rounded-lg border border-zinc-200 bg-white py-2 px-3 text-xs text-zinc-700 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 shadow-sm"
               >
                 {statuses.map((opt) => (
@@ -251,6 +287,7 @@ const Issues = () => {
               <select
                 value={sort}
                 onChange={(e) => setSort(e.target.value)}
+                aria-label="Sort issues"
                 className="w-full rounded-lg border border-zinc-200 bg-white py-2 px-3 text-xs text-zinc-700 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 shadow-sm"
               >
                 {sortOptions.map((opt) => (
@@ -269,42 +306,44 @@ const Issues = () => {
               </button>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Directory Output Grid / List container */}
-        {loading ? (
-          <div className="flex justify-center py-24">
-            <Loader2 className="h-9 w-9 animate-spin text-primary" />
-          </div>
-        ) : filteredAndSorted.length > 0 ? (
-          <div className="space-y-6">
-            <div className={isListView ? "space-y-4" : "grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"}>
-              {paginatedIssues.map((issue) => (
-                <IssueCard
-                  key={issue._id}
-                  issue={issue}
-                  isListView={isListView}
-                  onDelete={(id) => setIssues((prev) => prev.filter((item) => item._id !== id))}
-                />
-              ))}
+        <section aria-label="Issues List">
+          {loading ? (
+            <div className="flex justify-center py-24">
+              <Loader2 className="h-9 w-9 animate-spin text-primary" />
             </div>
+          ) : filteredAndSorted.length > 0 ? (
+            <div className="space-y-6">
+              <div className={isListView ? "space-y-4" : "grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"}>
+                {paginatedIssues.map((issue) => (
+                  <IssueCard
+                    key={issue._id}
+                    issue={issue}
+                    isListView={isListView}
+                    onDelete={(id) => setIssues((prev) => prev.filter((item) => item._id !== id))}
+                  />
+                ))}
+              </div>
 
-            {/* Pagination Controls */}
-            <PaginationControls
-              totalCount={filteredAndSorted.length}
-              currentPage={currentPage}
-              itemsPerPage={itemsPerPage}
-              onPageChange={setCurrentPage}
-            />
-          </div>
-        ) : (
-          <div className="rounded-xl border border-zinc-200 bg-white p-16 text-center shadow-sm">
-            <p className="text-sm font-semibold text-zinc-400">No issues registered matching these filters.</p>
-            <button onClick={resetFilters} className="mt-3 text-xs font-bold text-primary hover:underline">Clear search parameters</button>
-          </div>
-        )}
+              {/* Pagination Controls */}
+              <PaginationControls
+                totalCount={filteredAndSorted.length}
+                currentPage={currentPage}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+              />
+            </div>
+          ) : (
+            <div className="rounded-xl border border-zinc-200 bg-white p-16 text-center shadow-sm">
+              <p className="text-sm font-semibold text-zinc-400">No issues registered matching these filters.</p>
+              <button onClick={resetFilters} className="mt-3 text-xs font-bold text-primary hover:underline">Clear search parameters</button>
+            </div>
+          )}
+        </section>
 
-      </div>
+      </main>
     </div>
   );
 };

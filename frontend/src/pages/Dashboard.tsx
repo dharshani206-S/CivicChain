@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import IssueCard from "@/components/IssueCard";
+import SEO from "@/components/SEO";
 import type { Issue } from "@/types/issue";
 import { toIssueArray, getApiErrorMessage } from "@/utils/api";
 import { toast } from "sonner";
@@ -66,6 +67,11 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-[#fafafa] text-zinc-950 font-sans pb-12 sm:pb-16">
+      <SEO
+        title="Citizen Hub | CivicChain"
+        description="Citizen incident dashboard and complaint overview."
+        noIndex={true}
+      />
       <Navbar />
 
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-4 sm:py-8 space-y-4 sm:space-y-8">

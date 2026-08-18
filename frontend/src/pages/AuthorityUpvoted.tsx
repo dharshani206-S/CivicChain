@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { issuesAPI } from "@/services/api";
 import Navbar from "@/components/Navbar";
 import IssueCard from "@/components/IssueCard";
+import SEO from "@/components/SEO";
 import { useAuth } from "@/contexts/AuthContext";
 import { TrendingUp, Shield, ThumbsUp } from "lucide-react";
 import type { Issue } from "@/types/issue";
@@ -45,6 +46,11 @@ const AuthorityUpvoted = () => {
 
   return (
     <div className="min-h-screen bg-[#fafafa] text-zinc-950 font-sans pb-16">
+      <SEO
+        title="Department Priority Upvoted Issues | CivicChain"
+        description="Priority complaints ranked by citizen backing."
+        noIndex={true}
+      />
       <Navbar />
 
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-8 space-y-8">

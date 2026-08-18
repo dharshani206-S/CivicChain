@@ -1,8 +1,48 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /$
+Allow: /issues$
+Allow: /issues/*
+Allow: /login/citizen$
+Allow: /register$
+Allow: /favicon.ico
+Allow: /favicon.png
+Allow: /logo.png
+Allow: /hero-bg.jpg
+Allow: /placeholder.svg
+Allow: /assets/
+
+# Disallow authenticated citizen pages and authority command consoles
+Disallow: /dashboard
+Disallow: /dashboard/
+Disallow: /report
+Disallow: /report/
+Disallow: /my-stats
+Disallow: /my-stats/
+Disallow: /authority
+Disallow: /authority/
+Disallow: /authority/*
+Disallow: /api/
+Disallow: /login/authority
+
+# Crawlers specific directives
 User-agent: Googlebot
 Allow: /
+Disallow: /dashboard
+Disallow: /report
+Disallow: /my-stats
+Disallow: /authority/
+Disallow: /api/
+Disallow: /login/authority
 
 User-agent: Bingbot
 Allow: /
+Disallow: /dashboard
+Disallow: /report
+Disallow: /my-stats
+Disallow: /authority/
+Disallow: /api/
+Disallow: /login/authority
 
 User-agent: Twitterbot
 Allow: /
@@ -10,5 +50,5 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
-User-agent: *
-Allow: /
+# Sitemap definition
+Sitemap: https://civic-chain-tau.vercel.app/sitemap.xml

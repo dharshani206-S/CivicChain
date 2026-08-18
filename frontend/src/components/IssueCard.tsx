@@ -85,13 +85,13 @@ const IssueCard = memo(({ issue, isListView = false, onDelete }: IssueCardProps)
 
   if (isListView) {
     return (
-      <div className="group flex flex-col sm:flex-row gap-4 rounded-xl border border-zinc-200 bg-white p-4 hover:border-zinc-300 hover:shadow-md transition-all">
+      <article className="group flex flex-col sm:flex-row gap-4 rounded-xl border border-zinc-200 bg-white p-4 hover:border-zinc-300 hover:shadow-md transition-all">
         {/* Image viewport */}
         <div className="relative aspect-video sm:w-48 w-full shrink-0 overflow-hidden rounded-lg border border-zinc-100 bg-zinc-900">
           {imageUrl && !imageError ? (
             <img
               src={imageUrl}
-              alt={issue.title}
+              alt={`Photo of ${issue.title} in Puducherry`}
               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
               loading="lazy"
               decoding="async"
@@ -158,18 +158,18 @@ const IssueCard = memo(({ issue, isListView = false, onDelete }: IssueCardProps)
             </div>
           </div>
         </div>
-      </div>
+      </article>
     );
   }
 
   return (
-    <div className="group flex flex-col justify-between rounded-xl border border-zinc-200 bg-white shadow-sm hover:shadow-md hover:border-zinc-300 transition-all overflow-hidden">
+    <article className="group flex flex-col justify-between rounded-xl border border-zinc-200 bg-white shadow-sm hover:shadow-md hover:border-zinc-300 transition-all overflow-hidden">
       {/* Image Block */}
       <div className="relative aspect-video w-full overflow-hidden border-b border-zinc-100 bg-slate-900">
         {imageUrl && !imageError ? (
           <img
             src={imageUrl}
-            alt={issue.title}
+            alt={`Photo of ${issue.title} in Puducherry`}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
             decoding="async"
@@ -240,7 +240,7 @@ const IssueCard = memo(({ issue, isListView = false, onDelete }: IssueCardProps)
           </div>
         </div>
       </div>
-    </div>
+    </article>
   );
 });
 

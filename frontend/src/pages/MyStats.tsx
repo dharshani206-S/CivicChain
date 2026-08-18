@@ -13,6 +13,7 @@ import {
   Loader2
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import SEO from "@/components/SEO";
 import IssueCard from "@/components/IssueCard";
 import type { Issue } from "@/types/issue";
 import { toIssueArray } from "@/utils/api";
@@ -69,6 +70,11 @@ const MyStats = () => {
 
   return (
     <div className="min-h-screen bg-[#fafafa] text-zinc-950 font-sans pb-16">
+      <SEO
+        title="My Report Stats | CivicChain"
+        description="Dedicated Citizen Complaint Analytics and Filter Tabs."
+        noIndex={true}
+      />
       <Navbar />
       <div className="container mx-auto max-w-4xl px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
 
@@ -110,7 +116,7 @@ const MyStats = () => {
                   <div className={`shrink-0 rounded-md p-1 border ${c.iconStyle}`}><Icon className="h-3.5 w-3.5" /></div>
                 </div>
                 <p className="text-3xl font-extrabold text-zinc-900 tracking-tight">
-                  {loading ? <span className="text-zinc-300">–</span> : c.value}
+                  {loading ? <span className="text-zinc-300">ï¿½</span> : c.value}
                 </p>
                 {isSelected && (
                   <span className="inline-block rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">Viewing</span>

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { issuesAPI, aiAPI, type GeminiAnalysisResult } from "@/services/api";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
+import SEO from "@/components/SEO";
 import ImageUpload from "@/components/ImageUpload";
 import LocationPickerMap from "@/components/LocationPickerMap";
 import {
@@ -963,6 +964,11 @@ const ReportIssue = () => {
 
   return (
     <div className="min-h-screen bg-[#fafafa] text-zinc-950 font-sans pb-16">
+      <SEO
+        title="Report Civic Issue | CivicChain"
+        description="Lodge a new geotagged civic issue in Puducherry."
+        noIndex={true}
+      />
       <Navbar />
       
       <div className="container mx-auto max-w-3xl px-4 py-8">

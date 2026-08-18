@@ -1,9 +1,10 @@
-import { useEffect, useState, memo } from "react";
+import { useEffect, useState, useMemo, memo } from "react";
 import HeatMap from "@/components/HeatMap";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { issuesAPI, getUploadUrl } from "@/services/api";
 import Navbar from "@/components/Navbar";
 import VoteButton from "@/components/VoteButton";
+import SEO from "@/components/SEO";
 import { useAuth } from "@/contexts/AuthContext";
 import { getApiErrorMessage } from "@/utils/api";
 import {
@@ -54,7 +55,7 @@ const ImageColumn = memo(({
           <>
             <img
               src={imageUrl}
-              alt={title}
+              alt={`Photo of civic complaint: ${title}`}
               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
               loading="lazy"
               decoding="async"
@@ -102,7 +103,7 @@ const DetailsHeader = memo(({
   priorityLabel: string;
   priorityStyle: string;
 }) => (
-  <div className="space-y-3">
+  <header className="space-y-3">
     <div className="flex flex-wrap items-center gap-2">
       <span className={`rounded-md border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${statusColors[status] || statusColors.pending}`}>
         {status}
@@ -118,7 +119,7 @@ const DetailsHeader = memo(({
     <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-950 leading-tight">
       {title}
     </h1>
-  </div>
+  </header>
 ));
 DetailsHeader.displayName = "DetailsHeader";
 
@@ -159,7 +160,7 @@ const TimelineSection = memo(({
   ];
 
   return (
-    <div className="space-y-4">
+    <section aria-label="Audit Progress Timeline" className="space-y-4">
       <h3 className="text-sm font-bold text-zinc-900 border-b border-zinc-150 pb-2">Audit Progress Timeline</h3>
       
       <div className="relative pl-5 border-l-2 border-zinc-200 space-y-6">
@@ -186,7 +187,7 @@ const TimelineSection = memo(({
           );
         })}
       </div>
-    </div>
+    </section>
   );
 });
 TimelineSection.displayName = "TimelineSection";
@@ -205,7 +206,7 @@ const IssueHeatMapSection = memo(({
     issue.longitude !== "";
 
   return (
-    <div className="space-y-3">
+    <section aria-label="Issue Location Heat Map" className="space-y-3">
       <div className="flex items-center justify-between border-b border-zinc-150 pb-2">
         <h3 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
           <Activity className="h-4 w-4 text-rose-500" />
@@ -232,7 +233,7 @@ const IssueHeatMapSection = memo(({
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 });
 IssueHeatMapSection.displayName = "IssueHeatMapSection";
@@ -291,9 +292,84 @@ const IssueDetails = () => {
     }
   };
 
+  const imageUrl = issue ? getUploadUrl(issue.image, { width: 1000, height: 750 }) : null;
+  const departmentLabel = issue?.department || "General";
+  
+  // Dynamic Priority calculation based on votes
+  const getPriority = (votes: number) => {
+    if (votes >= 50) return { label: "Critical", style: "bg-rose-100 text-rose-700 border-rose-200" };
+    if (votes >= 20) return { label: "High", style: "bg-amber-100 text-amber-700 border-amber-200" };
+    return { label: "Normal", style: "bg-zinc-100 text-zinc-700 border-zinc-200" };
+  };
+
+  const priority = getPriority(issue ? issue.votes : 0);
+
+  const issueStructuredData = useMemo(() => {
+    if (!issue) return undefined;
+    return {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Report",
+          "@id": `https://civic-chain-tau.vercel.app/issues/${issue._id}#report`,
+          "headline": issue.title,
+          "description": issue.description,
+          "datePublished": issue.createdAt,
+          "image": imageUrl || "https://civic-chain-tau.vercel.app/hero-bg.jpg",
+          "author": {
+            "@type": "Organization",
+            "name": "CivicChain Community Reporter"
+          },
+          "publisher": {
+            "@type": "Organization",
+            "name": "CivicChain",
+            "url": "https://civic-chain-tau.vercel.app"
+          },
+          "spatialCoverage": {
+            "@type": "Place",
+            "name": issue.location || "Puducherry, India",
+            "geo": issue.latitude && issue.longitude ? {
+              "@type": "GeoCoordinates",
+              "latitude": parseFloat(String(issue.latitude)),
+              "longitude": parseFloat(String(issue.longitude))
+            } : undefined
+          }
+        },
+        {
+          "@type": "BreadcrumbList",
+          "@id": `https://civic-chain-tau.vercel.app/issues/${issue._id}#breadcrumb`,
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://civic-chain-tau.vercel.app"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Issues Directory",
+              "item": "https://civic-chain-tau.vercel.app/issues"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": issue.title,
+              "item": `https://civic-chain-tau.vercel.app/issues/${issue._id}`
+            }
+          ]
+        }
+      ]
+    };
+  }, [issue, imageUrl]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#fafafa]">
+        <SEO
+          title="Loading Civic Incident... | CivicChain"
+          description="Loading civic issue details on CivicChain Puducherry."
+        />
         <Navbar />
         <div className="flex justify-center py-24">
           <IssueLoader />
@@ -305,47 +381,61 @@ const IssueDetails = () => {
   if (!issue) {
     return (
       <div className="min-h-screen bg-[#fafafa]">
+        <SEO
+          title="Ticket Not Found | CivicChain"
+          description="The requested civic incident ticket does not exist or has been archived."
+          noIndex={true}
+        />
         <Navbar />
-        <div className="container mx-auto px-4 py-20 text-center space-y-4">
+        <main className="container mx-auto px-4 py-20 text-center space-y-4">
           <AlertTriangle className="h-10 w-10 text-amber-500 mx-auto" />
           <h2 className="text-lg font-bold text-zinc-950">Ticket Not Found</h2>
           <p className="text-xs text-zinc-500">The requested ticket ID does not exist or has been archived.</p>
           <Link to="/issues" className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white py-2 px-4 text-xs font-semibold text-zinc-700 hover:bg-zinc-50">
             <ArrowLeft className="h-4 w-4" /> Back to Directory
           </Link>
-        </div>
+        </main>
       </div>
     );
   }
 
-  const imageUrl = getUploadUrl(issue.image, { width: 1000, height: 750 });
-  const departmentLabel = issue.department || "General";
-  
-  // Dynamic Priority calculation based on votes
-  const getPriority = (votes: number) => {
-    if (votes >= 50) return { label: "Critical", style: "bg-rose-100 text-rose-700 border-rose-200" };
-    if (votes >= 20) return { label: "High", style: "bg-amber-100 text-amber-700 border-amber-200" };
-    return { label: "Normal", style: "bg-zinc-100 text-zinc-700 border-zinc-200" };
-  };
-
-  const priority = getPriority(issue.votes);
+  const seoDescription = issue.description.length > 155
+    ? `${issue.description.slice(0, 152)}...`
+    : issue.description;
 
   return (
     <div className="min-h-screen bg-[#fafafa] text-zinc-950 font-sans pb-16">
+      <SEO
+        title={`${issue.title} | CivicChain Puducherry`}
+        description={seoDescription}
+        canonicalUrl={`https://civic-chain-tau.vercel.app/issues/${issue._id}`}
+        ogType="article"
+        ogImage={imageUrl || "/hero-bg.jpg"}
+        ogImageAlt={`Civic issue: ${issue.title}`}
+        structuredData={issueStructuredData}
+        keywords={[
+          issue.title,
+          departmentLabel,
+          issue.location || "Puducherry",
+          "civic issue track",
+          "municipal resolution pipeline"
+        ]}
+      />
+
       <Navbar />
 
-      <div className="container mx-auto max-w-6xl px-4 sm:px-6 py-8 space-y-6">
+      <main className="container mx-auto max-w-6xl px-4 sm:px-6 py-8 space-y-6">
         
         {/* Navigation Breadcrumb */}
-        <div className="flex items-center justify-between border-b border-zinc-200 pb-4">
+        <nav aria-label="Breadcrumb" className="flex items-center justify-between border-b border-zinc-200 pb-4">
           <Link to="/issues" className="inline-flex items-center gap-1 text-xs font-bold text-zinc-500 hover:text-primary transition-colors focus:outline-none focus:underline">
             <ArrowLeft className="h-3.5 w-3.5" /> Back to Directory
           </Link>
           <span className="text-[10px] font-mono text-zinc-400 select-none">TICKET ID: {issue._id}</span>
-        </div>
+        </nav>
 
         {/* Layout: Left Column (Image) | Right Column (Details) */}
-        <div className="grid gap-8 md:grid-cols-12 items-stretch">
+        <article className="grid gap-8 md:grid-cols-12 items-stretch">
           
           {/* Left Column (Image) */}
           <div className="md:col-span-5">
@@ -433,7 +523,7 @@ const IssueDetails = () => {
             </div>
           </div>
 
-        </div>
+        </article>
 
         {/* Timeline & Mapping Grid */}
         <div className="grid gap-6 md:grid-cols-2">
@@ -448,7 +538,7 @@ const IssueDetails = () => {
           </div>
         </div>
 
-      </div>
+      </main>
 
       {/* Expanded Zoom Lightbox Modal */}
       <AnimatePresence>

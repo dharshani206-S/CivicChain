@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { issuesAPI } from "@/services/api";
 import Navbar from "@/components/Navbar";
+import SEO from "@/components/SEO";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   FileText,
@@ -116,6 +117,11 @@ const AuthorityStats = () => {
 
   return (
     <div className="min-h-screen bg-[#fafafa] text-zinc-950 font-sans pb-16">
+      <SEO
+        title="Department Statistical Reports | CivicChain"
+        description="Department metrics, statistical reports, and resolution pipelines."
+        noIndex={true}
+      />
       <Navbar />
 
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
@@ -168,7 +174,7 @@ const AuthorityStats = () => {
                   </div>
                 </div>
                 <p className="text-2xl font-extrabold text-zinc-900 tracking-tight">
-                  {loading ? <span className="text-zinc-300">–</span> : c.value}
+                  {loading ? <span className="text-zinc-300">ï¿½</span> : c.value}
                 </p>
               </button>
             );

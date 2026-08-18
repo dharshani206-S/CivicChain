@@ -1,5 +1,5 @@
-﻿# CivicChain — AI-Model Civic Incident Dispatch & Smart City Platform
-> **Target Scope**: Pondicherry / Puducherry, India.
+# CivicChain — AI-Model Civic Incident Dispatch & Smart City Platform
+**Target Scope**: Pondicherry / Puducherry, India.
 
 CivicChain is an AI-powered civic issue reporting and smart city incident dispatch platform designed for Pondicherry/Puducherry. It connects citizens directly with municipal departments (Sanitation, Road Infrastructure, Water Supply, Electricity, Public Safety) for real-time reporting, AI vision verification, GPS location tracking, and departmental status resolution pipelines.
 
@@ -61,7 +61,7 @@ CivicChain is designed specifically for Pondicherry / Puducherry. All location t
 PORT=5000
 MONGO_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/civicchain
 JWT_SECRET=your_production_jwt_secret_key
-FRONTEND_URL=https://your-civicchain.vercel.app
+FRONTEND_URL=https://civic-chain-tau.vercel.app
 GEMINI_API_KEY=your_google_gemini_api_key
 CLOUDINARY_CLOUD_NAME=your_cloudinary_name
 CLOUDINARY_API_KEY=your_cloudinary_key

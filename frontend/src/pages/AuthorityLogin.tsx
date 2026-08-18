@@ -3,12 +3,13 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { authAPI } from "@/services/api";
 import { toast } from "sonner";
-import { Shield, Mail, Lock, Loader2, Landmark, Users } from "lucide-react";
+import { Shield, Mail, Loader2, Landmark, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import authorityBg from "@/assets/civic-authority.jpg";
 import { DEPARTMENTS } from "@/constants/departments";
 import { getApiErrorMessage } from "@/utils/api";
 import PasswordInput from "@/components/PasswordInput";
+import SEO from "@/components/SEO";
 
 const AuthorityLogin = () => {
   const [email, setEmail] = useState("");
@@ -35,11 +36,17 @@ const AuthorityLogin = () => {
 
   return (
     <div className="flex min-h-screen bg-white">
+      <SEO
+        title="Authority Console Access | CivicChain"
+        description="Official administrative console for Puducherry municipal officers to manage and dispatch civic complaints."
+        noIndex={true}
+      />
+
       {/* Left Pane: Command Center Image and Overlay */}
       <div className="relative hidden w-1/2 overflow-hidden lg:block bg-zinc-950">
         <img
           src={authorityBg}
-          alt="Command center"
+          alt="CivicChain Municipal Authority Operations Console in Puducherry"
           className="absolute inset-0 h-full w-full object-cover opacity-80 transition-transform scale-105 hover:scale-100"
           style={{ transitionDuration: "12000ms" }}
           loading="eager"
@@ -91,7 +98,7 @@ const AuthorityLogin = () => {
       </div>
 
       {/* Right Pane: Clean Login Form */}
-      <div className="flex w-full items-center justify-center px-6 py-12 lg:w-1/2 bg-[#fafafa]">
+      <main className="flex w-full items-center justify-center px-6 py-12 lg:w-1/2 bg-[#fafafa]">
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
@@ -99,9 +106,9 @@ const AuthorityLogin = () => {
           className="w-full max-w-md space-y-8"
         >
           {/* Header block */}
-          <div className="space-y-4">
+          <header className="space-y-4">
             <Link to="/" className="inline-block">
-              <img src="/logo.png" alt="CivicChain Logo" className="h-24 w-auto object-contain" />
+              <img src="/logo.png" alt="CivicChain Platform Logo" className="h-24 w-auto object-contain" />
             </Link>
             <div>
               <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary border border-primary/20">
@@ -110,7 +117,7 @@ const AuthorityLogin = () => {
               <h1 className="text-3xl font-extrabold tracking-tight text-zinc-950 mt-3">Officer Access</h1>
               <p className="mt-2 text-sm text-zinc-500">Sign in to review and transition municipal tickets.</p>
             </div>
-          </div>
+          </header>
 
           {/* Form wrapper */}
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -190,7 +197,7 @@ const AuthorityLogin = () => {
             </div>
           </div>
         </motion.div>
-      </div>
+      </main>
     </div>
   );
 };

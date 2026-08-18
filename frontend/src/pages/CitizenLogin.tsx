@@ -3,10 +3,11 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { authAPI } from "@/services/api";
 import { toast } from "sonner";
-import { Users, Mail, Lock, Loader2, CheckCircle2, ShieldAlert } from "lucide-react";
+import { Users, Mail, Loader2, CheckCircle2, ShieldAlert } from "lucide-react";
 import { motion } from "framer-motion";
 import citizenBg from "@/assets/civic-citizen.jpg";
 import PasswordInput from "@/components/PasswordInput";
+import SEO from "@/components/SEO";
 import { getApiErrorMessage } from "@/utils/api";
 
 const CitizenLogin = () => {
@@ -33,11 +34,17 @@ const CitizenLogin = () => {
 
   return (
     <div className="flex min-h-screen bg-white">
+      <SEO
+        title="Citizen Sign In | CivicChain Puducherry"
+        description="Sign in to your CivicChain citizen account to report municipal complaints, track status pipelines, and upvote local issues in Puducherry."
+        canonicalUrl="https://civic-chain-tau.vercel.app/login/citizen"
+      />
+
       {/* Left Pane: Immersive Community Image and Overlay */}
       <div className="relative hidden w-1/2 overflow-hidden lg:block bg-zinc-950">
         <img
           src={citizenBg}
-          alt="City skyline"
+          alt="CivicChain Citizen Community Hub in Puducherry"
           className="absolute inset-0 h-full w-full object-cover opacity-85 transition-transform scale-105 hover:scale-100"
           style={{ transitionDuration: "12000ms" }}
           loading="eager"
@@ -89,7 +96,7 @@ const CitizenLogin = () => {
       </div>
 
       {/* Right Pane: Clean Login Form */}
-      <div className="flex w-full items-center justify-center px-6 py-12 lg:w-1/2 bg-[#fafafa]">
+      <main className="flex w-full items-center justify-center px-6 py-12 lg:w-1/2 bg-[#fafafa]">
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
@@ -97,9 +104,9 @@ const CitizenLogin = () => {
           className="w-full max-w-md space-y-8"
         >
           {/* Header block */}
-          <div className="space-y-4">
+          <header className="space-y-4">
             <Link to="/" className="inline-block">
-              <img src="/logo.png" alt="CivicChain Logo" className="h-24 w-auto object-contain" />
+              <img src="/logo.png" alt="CivicChain Platform Logo" className="h-24 w-auto object-contain" />
             </Link>
             <div>
               <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary border border-primary/20">
@@ -108,7 +115,7 @@ const CitizenLogin = () => {
               <h1 className="text-3xl font-extrabold tracking-tight text-zinc-950 mt-3">Welcome Back</h1>
               <p className="mt-2 text-sm text-zinc-500">Sign in to your dashboard to report or upvote issues.</p>
             </div>
-          </div>
+          </header>
 
           {/* Form wrapper */}
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -168,7 +175,7 @@ const CitizenLogin = () => {
             </div>
           </div>
         </motion.div>
-      </div>
+      </main>
     </div>
   );
 };
