@@ -37,7 +37,7 @@ const AuthorityLogin = () => {
   return (
     <div className="flex min-h-screen bg-white">
       <SEO
-        title="Authority Console Access | CivicChain"
+        title="Authority Login | CivicChain"
         description="Official administrative console for Puducherry municipal officers to manage and dispatch civic complaints."
         noIndex={true}
       />

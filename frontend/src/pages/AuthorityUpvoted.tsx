@@ -47,7 +47,7 @@ const AuthorityUpvoted = () => {
   return (
     <div className="min-h-screen bg-[#fafafa] text-zinc-950 font-sans pb-16">
       <SEO
-        title="Department Priority Upvoted Issues | CivicChain"
+        title="Priority Upvoted Issues | CivicChain"
         description="Priority complaints ranked by citizen backing."
         noIndex={true}
       />

@@ -68,7 +68,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-[#fafafa] text-zinc-950 font-sans pb-12 sm:pb-16">
       <SEO
-        title="Citizen Hub | CivicChain"
+        title="Dashboard | CivicChain"
         description="Citizen incident dashboard and complaint overview."
         noIndex={true}
       />

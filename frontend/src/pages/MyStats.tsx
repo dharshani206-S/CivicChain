@@ -71,7 +71,7 @@ const MyStats = () => {
   return (
     <div className="min-h-screen bg-[#fafafa] text-zinc-950 font-sans pb-16">
       <SEO
-        title="My Report Stats | CivicChain"
+        title="My Reports | CivicChain"
         description="Dedicated Citizen Complaint Analytics and Filter Tabs."
         noIndex={true}
       />

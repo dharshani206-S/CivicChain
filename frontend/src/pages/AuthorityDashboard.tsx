@@ -312,7 +312,7 @@ const AuthorityDashboard = () => {
   return (
     <div className="min-h-screen bg-[#fafafa] text-zinc-950 font-sans pb-16">
       <SEO
-        title="Authority Command Center | CivicChain"
+        title="Authority Dashboard | CivicChain"
         description="Department Dispatch Command Center and Ticket Management."
         noIndex={true}
       />

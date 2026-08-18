@@ -118,7 +118,7 @@ const AuthorityStats = () => {
   return (
     <div className="min-h-screen bg-[#fafafa] text-zinc-950 font-sans pb-16">
       <SEO
-        title="Department Statistical Reports | CivicChain"
+        title="Department Statistics | CivicChain"
         description="Department metrics, statistical reports, and resolution pipelines."
         noIndex={true}
       />

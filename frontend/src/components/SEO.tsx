@@ -31,15 +31,15 @@ export const getSiteUrl = (): string => {
   return "https://civic-chain-tau.vercel.app";
 };
 
-const DEFAULT_TITLE = "CivicChain | AI-Powered Civic Issue Reporting for Puducherry";
+const DEFAULT_TITLE = "CivicChain";
 const DEFAULT_DESCRIPTION =
-  "CivicChain connects Puducherry citizens with municipal departments. Lodge geotagged civic reports with AI vision classification and track real-time resolution.";
+  "CivicChain is a civic issue reporting platform for Puducherry that helps citizens report local issues, share locations, track complaints, and connect with relevant municipal departments.";
 const DEFAULT_KEYWORDS = [
   "CivicChain",
   "Puducherry civic issues",
   "Pondicherry municipal reporting",
   "smart city Puducherry",
-  "AI civic issue reporting",
+  "civic issue reporting",
   "pothole complaint Pondicherry",
   "sanitation issue tracker",
   "citizen grievance portal",

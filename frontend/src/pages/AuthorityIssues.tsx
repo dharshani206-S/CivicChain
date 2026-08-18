@@ -81,7 +81,7 @@ const AuthorityIssues = () => {
   return (
     <div className="min-h-screen bg-[#fafafa] text-zinc-950 font-sans pb-16">
       <SEO
-        title="Department Issues Directory | CivicChain"
+        title="Department Issues | CivicChain"
         description="Department municipal complaint directory and filter console."
         noIndex={true}
       />

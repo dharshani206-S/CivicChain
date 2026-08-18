@@ -367,7 +367,7 @@ const IssueDetails = () => {
     return (
       <div className="min-h-screen bg-[#fafafa]">
         <SEO
-          title="Loading Civic Incident... | CivicChain"
+          title="Loading Incident | CivicChain"
           description="Loading civic issue details on CivicChain Puducherry."
         />
         <Navbar />
@@ -406,7 +406,7 @@ const IssueDetails = () => {
   return (
     <div className="min-h-screen bg-[#fafafa] text-zinc-950 font-sans pb-16">
       <SEO
-        title={`${issue.title} | CivicChain Puducherry`}
+        title={`${issue.title} | CivicChain`}
         description={seoDescription}
         canonicalUrl={`https://civic-chain-tau.vercel.app/issues/${issue._id}`}
         ogType="article"

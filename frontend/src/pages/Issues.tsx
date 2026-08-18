@@ -190,11 +190,12 @@ const Issues = () => {
   return (
     <div className="min-h-screen bg-[#fafafa] text-zinc-950 font-sans pb-16">
       <SEO
-        title="Civic Issues in Puducherry | CivicChain"
+        title="Civic Issues | CivicChain"
         description="Review active municipal tickets, road repairs, sanitation complaints, and public safety issues in Puducherry. Search by category and upvote community priorities."
         canonicalUrl="https://civic-chain-tau.vercel.app/issues"
         structuredData={directoryStructuredData}
         keywords={[
+          "CivicChain",
           "Puducherry civic issues directory",
           "Pondicherry municipal complaints",
           "road damage Pondicherry",

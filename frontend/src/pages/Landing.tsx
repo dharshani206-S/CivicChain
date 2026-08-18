@@ -44,10 +44,10 @@ const Landing = () => {
         "@type": "WebApplication",
         "@id": "https://civic-chain-tau.vercel.app/#app",
         "name": "CivicChain",
-        "url": "https://civic-chain-tau.vercel.app",
+        "url": "https://civic-chain-tau.vercel.app/",
         "applicationCategory": "GovernmentApplication",
         "operatingSystem": "Web Browser",
-        "description": "AI-Powered Civic Incident Dispatch & Smart City Platform for Puducherry.",
+        "description": "Civic issue reporting platform for Puducherry that helps citizens report local issues, share locations, track complaints, and connect with relevant municipal departments.",
         "offers": {
           "@type": "Offer",
           "price": "0",
@@ -63,7 +63,7 @@ const Landing = () => {
             "name": "What is CivicChain?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "CivicChain is an AI-powered smart city incident dispatch and civic issue reporting platform for Puducherry, connecting citizens directly with municipal departments."
+              "text": "CivicChain is a civic issue reporting platform for Puducherry, connecting citizens directly with municipal departments."
             }
           },
           {
@@ -82,17 +82,18 @@ const Landing = () => {
   return (
     <div className="min-h-screen bg-[#fafafa] text-zinc-950 font-sans">
       <SEO
-        title="CivicChain | AI-Powered Civic Issue Reporting for Puducherry"
-        description="CivicChain connects Puducherry citizens directly with municipal departments. Lodge geotagged civic reports with AI vision classification and track real-time resolution."
-        canonicalUrl="https://civic-chain-tau.vercel.app"
+        title="CivicChain"
+        description="CivicChain is a civic issue reporting platform for Puducherry that helps citizens report local issues, share locations, track complaints, and connect with relevant municipal departments."
+        canonicalUrl="https://civic-chain-tau.vercel.app/"
         ogType="website"
         ogImage="/hero-bg.jpg"
-        ogImageAlt="CivicChain AI Smart City Infrastructure in Puducherry"
+        ogImageAlt="CivicChain Platform for Puducherry"
         structuredData={landingStructuredData}
         keywords={[
+          "CivicChain",
           "CivicChain Puducherry",
           "Pondicherry civic reporting",
-          "AI smart city platform",
+          "smart city Puducherry",
           "municipal complaint Puducherry",
           "pothole report Pondicherry",
           "sanitation issue tracker Puducherry"

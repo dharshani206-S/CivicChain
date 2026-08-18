@@ -37,7 +37,7 @@ const Register = () => {
   return (
     <main className="relative flex min-h-screen items-center justify-center bg-[#fafafa] px-4 py-12">
       <SEO
-        title="Register Citizen Account | CivicChain Puducherry"
+        title="Register | CivicChain"
         description="Join CivicChain as a Puducherry citizen to submit civic complaints, upvote local municipal issues, and track live departmental resolution."
         canonicalUrl="https://civic-chain-tau.vercel.app/register"
       />

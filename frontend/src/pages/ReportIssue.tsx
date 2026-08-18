@@ -965,7 +965,7 @@ const ReportIssue = () => {
   return (
     <div className="min-h-screen bg-[#fafafa] text-zinc-950 font-sans pb-16">
       <SEO
-        title="Report Civic Issue | CivicChain"
+        title="Report an Issue | CivicChain"
         description="Lodge a new geotagged civic issue in Puducherry."
         noIndex={true}
       />

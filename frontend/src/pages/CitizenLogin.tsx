@@ -35,7 +35,7 @@ const CitizenLogin = () => {
   return (
     <div className="flex min-h-screen bg-white">
       <SEO
-        title="Citizen Sign In | CivicChain Puducherry"
+        title="Citizen Login | CivicChain"
         description="Sign in to your CivicChain citizen account to report municipal complaints, track status pipelines, and upvote local issues in Puducherry."
         canonicalUrl="https://civic-chain-tau.vercel.app/login/citizen"
       />

@@ -45,7 +45,7 @@ const AuthorityHeatMap = () => {
   return (
     <div className="min-h-screen bg-[#fafafa] text-zinc-950 font-sans pb-16">
       <SEO
-        title="Department Incident Heat Map | CivicChain"
+        title="Department Heat Map | CivicChain"
         description="Real-time incident density map locked to municipal departments in Puducherry."
         noIndex={true}
       />
