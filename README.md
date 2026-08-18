@@ -1,4 +1,4 @@
-﻿# CivicChain — AI-Powered Civic Incident Dispatch & Smart City Platform
+﻿# CivicChain — AI-Model Civic Incident Dispatch & Smart City Platform
 > **Target Scope**: Pondicherry / Puducherry, India.
 
 CivicChain is an AI-powered civic issue reporting and smart city incident dispatch platform designed for Pondicherry/Puducherry. It connects citizens directly with municipal departments (Sanitation, Road Infrastructure, Water Supply, Electricity, Public Safety) for real-time reporting, AI vision verification, GPS location tracking, and departmental status resolution pipelines.
